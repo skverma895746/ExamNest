@@ -37,11 +37,11 @@ service cloud.firestore {
 
     match /attempts/{attemptId} {
       // Anyone (including anonymous candidates) can submit an attempt, but
-      // attempts can never be edited or deleted once written, and only the
-      // admin can read them back for analytics.
+      // only the admin can read or delete them for analytics cleanup.
       allow create: if true;
       allow read: if isAdmin();
-      allow update, delete: if false;
+      allow update: if false;
+      allow delete: if isAdmin();
     }
 
     match /settings/{docId} {

@@ -100,6 +100,7 @@ export function renderShell(activeKey) {
 export async function loadOverviewStats() {
   try {
     const testsSnap = await getDocs(collection(db, "tests"));
+    const activeTestIds = new Set(testsSnap.docs.map((t) => t.id));
     let totalQuestions = 0;
     let latestTest = null;
     for (const t of testsSnap.docs) {
@@ -111,10 +112,11 @@ export async function loadOverviewStats() {
       }
     }
     const attemptsSnap = await getDocs(collection(db, "attempts"));
+    const activeAttempts = attemptsSnap.docs.filter((a) => activeTestIds.has(a.data().testId));
 
     setStat("statTotalTests", testsSnap.size);
     setStat("statTotalQuestions", totalQuestions);
-    setStat("statTotalAttempts", attemptsSnap.size);
+    setStat("statTotalAttempts", activeAttempts.length);
     setStat("statLatestTest", latestTest ? latestTest.title : "—");
   } catch (err) {
     console.error(err);
@@ -196,10 +198,18 @@ export function wireMockTestActions() {
         danger: true,
       });
       if (ok) {
-        await deleteTestCascade(testId);
-        toast("Test and all related data deleted.", "success");
-        loadMockTestsTable();
-        loadOverviewStats();
+        btn.disabled = true;
+        btn.textContent = "Deleting...";
+        try {
+          await deleteTestCascade(testId);
+          toast("Test and all related data deleted.", "success");
+          await Promise.all([loadMockTestsTable(), loadOverviewStats()]);
+        } catch (err) {
+          console.error(err);
+          toast("Couldn't delete the test completely. Please try again.", "error");
+          btn.disabled = false;
+          btn.textContent = "Delete";
+        }
       }
     } else if (action === "toggle") {
       const ref = doc(db, "tests", testId);

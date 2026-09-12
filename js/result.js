@@ -129,7 +129,7 @@ function wireActions() {
   );
 
   $("#retakeBtn").addEventListener("click", () => {
-    window.location.href = `exam.html?testId=${encodeURIComponent(result.testId)}`;
+    window.location.href = `instructions.html?testId=${encodeURIComponent(result.testId)}&mode=retest`;
   });
   $("#reviewBtn").addEventListener("click", () => {
     document.getElementById("reviewSection").scrollIntoView({ behavior: "smooth" });

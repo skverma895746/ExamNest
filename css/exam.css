@@ -32,6 +32,14 @@ body.exam-body {
   font-weight: 500;
 }
 
+.exam-topbar__controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .exam-timer {
   background: var(--navy);
   color: #fff;
@@ -309,5 +317,24 @@ body.exam-body {
   }
   .palette-sheet-toggle {
     display: inline-flex;
+  }
+}
+
+@media (max-width: 560px) {
+  .exam-topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .exam-topbar__title {
+    width: 100%;
+  }
+  .exam-topbar__controls {
+    width: 100%;
+  }
+  .exam-topbar__controls .btn {
+    padding-inline: 12px;
+  }
+  .exam-timer {
+    margin-right: auto;
   }
 }

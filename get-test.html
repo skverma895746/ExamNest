@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Get Test — ExamNest</title>
+<link rel="icon" href="assets/icons/favicon.svg" />
 <link rel="stylesheet" href="css/style.css" />
 <link rel="stylesheet" href="css/responsive.css" />
 </head>
@@ -59,7 +60,7 @@
     getCountFromServer,
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
   import { $, formatDate, debounce, escapeHtml, initNavbar } from "./js/utils.js";
-  import { getAttemptRecord } from "./js/storage.js";
+  import { getAttemptRecord, loadExamSession } from "./js/storage.js";
 
   initNavbar(`
     <a href="get-test.html" class="btn btn--ghost btn--block">Get Test</a>
@@ -110,7 +111,14 @@
     grid.innerHTML = list
       .map((test) => {
         const record = getAttemptRecord(test.id);
-        const buttonLabel = record?.attempted ? "Retest" : "Start Test";
+        const savedSession = loadExamSession(test.id);
+        const savedStartedAt = Number(savedSession?.startedAt || 0);
+        const lastSubmittedAt = record?.lastDate ? new Date(record.lastDate).getTime() : 0;
+        const canResume = savedSession && (!record?.attempted || savedStartedAt > lastSubmittedAt);
+        const buttonLabel = canResume ? "Resume" : record?.attempted ? "Retest" : "Start Test";
+        const targetUrl = canResume
+          ? `exam.html?testId=${encodeURIComponent(test.id)}`
+          : `instructions.html?testId=${encodeURIComponent(test.id)}${record?.attempted ? "&mode=retest" : ""}`;
         const difficulty = (test.difficulty || "medium").toLowerCase();
         const difficultyLabel = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
         const historyBlock = record?.attempted
@@ -134,7 +142,7 @@
             <span><strong>${test.negativeMarking ? `-${test.negativeMarking}` : "0"}</strong> neg. marking</span>
           </div>
           ${historyBlock}
-          <a class="btn btn--primary btn--block test-card__cta" href="instructions.html?testId=${encodeURIComponent(test.id)}">${buttonLabel}</a>
+          <a class="btn btn--primary btn--block test-card__cta" href="${targetUrl}">${buttonLabel}</a>
         </article>`;
       })
       .join("");

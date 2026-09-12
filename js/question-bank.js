@@ -153,8 +153,9 @@ export function wireQuestionBank() {
       });
       if (ok) {
         await deleteDoc(doc(db, "tests", testId, "questions", qId));
+        await refreshQuestionCounts([testId]);
         toast("Question deleted.", "success");
-        loadQuestionBank();
+        await loadQuestionBank();
       }
     } else if (btn.dataset.action === "edit-q") {
       const q = allQuestions.find((x) => x.testId === testId && x.id === qId);
@@ -172,12 +173,26 @@ export function wireQuestionBank() {
       danger: true,
     });
     if (!ok) return;
-    for (const cb of checked) {
-      const row = cb.closest("tr");
-      await deleteDoc(doc(db, "tests", row.dataset.testId, "questions", row.dataset.qId));
+    bulkDeleteBtn.disabled = true;
+    bulkDeleteBtn.textContent = "Deleting...";
+    try {
+      const affectedTestIds = new Set();
+      const deletes = checked.map((cb) => {
+        const row = cb.closest("tr");
+        affectedTestIds.add(row.dataset.testId);
+        return deleteDoc(doc(db, "tests", row.dataset.testId, "questions", row.dataset.qId));
+      });
+      await Promise.all(deletes);
+      await refreshQuestionCounts([...affectedTestIds]);
+      toast("Selected questions deleted.", "success");
+      await loadQuestionBank();
+    } catch (err) {
+      console.error(err);
+      toast("Couldn't delete selected questions. Please try again.", "error");
+    } finally {
+      bulkDeleteBtn.disabled = false;
+      bulkDeleteBtn.textContent = "Delete Selected";
     }
-    toast("Selected questions deleted.", "success");
-    loadQuestionBank();
   });
 
   bulkCancelBtn?.addEventListener("click", () => {
@@ -220,4 +235,13 @@ async function saveQuestionEdit(e) {
   toast("Question updated.", "success");
   $("#questionModalBackdrop").classList.remove("is-open");
   loadQuestionBank();
+}
+
+async function refreshQuestionCounts(testIds) {
+  await Promise.all(
+    [...new Set(testIds)].map(async (testId) => {
+      const snap = await getDocs(collection(db, "tests", testId, "questions"));
+      await updateDoc(doc(db, "tests", testId), { questionCount: snap.size });
+    })
+  );
 }
