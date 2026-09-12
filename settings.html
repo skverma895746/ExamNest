@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="Cache-Control" content="no-store" />
+<title>Settings — ExamNest Admin</title>
+<link rel="stylesheet" href="css/style.css" />
+<link rel="stylesheet" href="css/dashboard.css" />
+<link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body>
+
+<div id="adminMain" class="admin-main">
+  <div class="admin-header">
+    <div>
+      <h1>Settings</h1>
+      <p>Manage your admin credentials and platform-wide defaults.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel__head"><h2>Change Password</h2></div>
+    <form id="passwordForm" class="form-grid" style="max-width:420px;">
+      <div><label for="currentPassword">Current password</label><input type="password" id="currentPassword" required autocomplete="current-password" /></div>
+      <div><label for="newPassword">New password</label><input type="password" id="newPassword" required minlength="6" autocomplete="new-password" /></div>
+      <button type="submit" class="btn btn--primary">Update Password</button>
+    </form>
+  </div>
+
+  <div class="panel">
+    <div class="panel__head"><h2>Test Defaults</h2></div>
+    <form id="defaultsForm" class="form-grid" style="max-width:420px;">
+      <div class="form-row">
+        <div><label for="defaultTimer">Default timer (minutes)</label><input type="number" id="defaultTimer" min="1" value="60" /></div>
+        <div><label for="defaultNegative">Default negative marking</label><input type="number" id="defaultNegative" min="0" step="0.25" value="0" /></div>
+      </div>
+      <button type="submit" class="btn btn--primary">Save Defaults</button>
+    </form>
+  </div>
+
+  <div class="panel">
+    <div class="panel__head"><h2>Export Firestore Backup</h2></div>
+    <p style="color:var(--navy-60);font-size:0.9rem;margin-bottom:16px;">
+      Download a JSON snapshot of every test, question and attempt currently stored.
+    </p>
+    <button class="btn btn--soft" id="exportBtn">Export Backup (.json)</button>
+  </div>
+</div>
+
+<script type="module">
+  import { guardAdminPage } from "./js/auth.js";
+  import { renderShell } from "./js/dashboard.js";
+  import { db, auth } from "./js/firebase.js";
+  import {
+    doc,
+    getDoc,
+    setDoc,
+    collection,
+    getDocs,
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import {
+    EmailAuthProvider,
+    reauthenticateWithCredential,
+    updatePassword,
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { $, toast } from "./js/utils.js";
+
+  guardAdminPage().then(async (user) => {
+    renderShell("settings");
+    await loadDefaults();
+
+    $("#passwordForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const current = $("#currentPassword").value;
+      const next = $("#newPassword").value;
+      try {
+        const cred = EmailAuthProvider.credential(user.email, current);
+        await reauthenticateWithCredential(user, cred);
+        await updatePassword(user, next);
+        toast("Password updated.", "success");
+        e.target.reset();
+      } catch (err) {
+        console.error(err);
+        toast("Couldn't update password — check your current password.", "error");
+      }
+    });
+
+    $("#defaultsForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      try {
+        await setDoc(doc(db, "settings", "global"), {
+          defaultTimer: Number($("#defaultTimer").value) || 60,
+          defaultNegative: Number($("#defaultNegative").value) || 0,
+        });
+        toast("Defaults saved.", "success");
+      } catch (err) {
+        console.error(err);
+        toast("Couldn't save defaults.", "error");
+      }
+    });
+
+    $("#exportBtn").addEventListener("click", async () => {
+      $("#exportBtn").textContent = "Preparing export...";
+      try {
+        const backup = { tests: [], attempts: [] };
+        const testsSnap = await getDocs(collection(db, "tests"));
+        for (const t of testsSnap.docs) {
+          const qSnap = await getDocs(collection(db, "tests", t.id, "questions"));
+          backup.tests.push({
+            id: t.id,
+            ...t.data(),
+            questions: qSnap.docs.map((q) => ({ id: q.id, ...q.data() })),
+          });
+        }
+        const attemptsSnap = await getDocs(collection(db, "attempts"));
+        backup.attempts = attemptsSnap.docs.map((a) => ({ id: a.id, ...a.data() }));
+
+        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `examnest-backup-${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast("Backup downloaded.", "success");
+      } catch (err) {
+        console.error(err);
+        toast("Export failed.", "error");
+      } finally {
+        $("#exportBtn").textContent = "Export Backup (.json)";
+      }
+    });
+  });
+
+  async function loadDefaults() {
+    try {
+      const snap = await getDoc(doc(db, "settings", "global"));
+      if (snap.exists()) {
+        const d = snap.data();
+        if (d.defaultTimer) $("#defaultTimer").value = d.defaultTimer;
+        if (d.defaultNegative !== undefined) $("#defaultNegative").value = d.defaultNegative;
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+</script>
+</body>
+</html>

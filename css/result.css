@@ -1,0 +1,207 @@
+/* =============================================================================
+   ExamNest — Result & Analysis
+============================================================================= */
+
+.result-hero {
+  background: linear-gradient(160deg, #eef3ff, var(--bg));
+  padding: 44px 0 8px;
+  text-align: center;
+}
+
+.result-hero h1 {
+  font-size: clamp(1.6rem, 3vw, 2.1rem);
+  margin-bottom: 6px;
+}
+
+.result-hero p {
+  color: var(--navy-60);
+}
+
+.result-cards {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 14px;
+  padding: 28px 0;
+}
+
+.result-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 14px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.result-card__value {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.result-card__label {
+  font-size: 0.76rem;
+  color: var(--navy-60);
+  margin-top: 4px;
+}
+
+.result-card--score .result-card__value { color: var(--blue-dark); }
+.result-card--correct .result-card__value { color: var(--success); }
+.result-card--wrong .result-card__value { color: var(--error); }
+.result-card--unattempted .result-card__value { color: var(--warning); }
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  padding-bottom: 20px;
+}
+
+.chart-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+}
+
+.chart-panel h3 {
+  font-size: 0.92rem;
+  margin-bottom: 14px;
+}
+
+.bar-chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 18px;
+  height: 160px;
+  margin-bottom: 10px;
+}
+
+.bar-chart__col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  height: 100%;
+}
+
+.bar-chart__bar {
+  width: 34px;
+  border-radius: 8px 8px 0 0;
+  transition: height 400ms var(--ease);
+}
+
+.bar-chart__label {
+  font-size: 0.76rem;
+  color: var(--navy-60);
+}
+
+.time-bar-track {
+  height: 14px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+  margin: 20px 0 10px;
+}
+
+.time-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--blue), var(--blue-dark));
+  border-radius: 999px;
+  transition: width 500ms var(--ease);
+}
+
+.result-actions {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  padding: 10px 0 40px;
+  flex-wrap: wrap;
+}
+
+/* Review section ------------------------------------------------------------ */
+.review-filters {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.review-filter {
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1.5px solid var(--border);
+  background: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--navy-60);
+}
+
+.review-filter.is-active {
+  background: var(--navy);
+  color: #fff;
+  border-color: var(--navy);
+}
+
+.review-item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px;
+  margin-bottom: 16px;
+}
+
+.review-item__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.review-item__q {
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.review-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.review-badge--correct { background: rgba(16,185,129,0.12); color: var(--success); }
+.review-badge--wrong { background: rgba(239,68,68,0.12); color: var(--error); }
+.review-badge--unattempted { background: rgba(245,158,11,0.14); color: #b45309; }
+
+.review-option {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border);
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.review-option.is-correct-answer {
+  border-color: var(--success);
+  background: rgba(16,185,129,0.08);
+}
+
+.review-option.is-your-wrong-answer {
+  border-color: var(--error);
+  background: rgba(239,68,68,0.08);
+}
+
+@media (max-width: 1024px) {
+  .result-cards { grid-template-columns: repeat(3, 1fr); }
+  .charts-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .result-cards { grid-template-columns: repeat(2, 1fr); }
+}

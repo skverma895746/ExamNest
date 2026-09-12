@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="Cache-Control" content="no-store" />
+<title>Upload Questions — ExamNest Admin</title>
+<link rel="stylesheet" href="css/style.css" />
+<link rel="stylesheet" href="css/dashboard.css" />
+<link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body>
+
+<div id="adminMain" class="admin-main">
+  <div class="admin-header">
+    <div>
+      <h1>Upload Questions</h1>
+      <p>Upload a CSV or Excel file, review it, then save it straight into Firestore. The file itself is never kept.</p>
+    </div>
+  </div>
+
+  <div class="upload-steps">
+    <span class="upload-step is-active" data-step="select">1. Select file</span>
+    <span class="upload-step" data-step="preview">2. Preview</span>
+    <span class="upload-step" data-step="validate">3. Validate</span>
+    <span class="upload-step" data-step="save">4. Save</span>
+  </div>
+
+  <div class="panel">
+    <div class="panel__head"><h2>1. Select a file</h2></div>
+    <div class="dropzone" id="dropzone">
+      <strong>Click to browse</strong> or drag a .csv / .xlsx file here
+      <p style="margin-top:8px;font-size:0.82rem;">
+        Expected columns: Question, Option A, Option B, Option C, Option D, Answer
+      </p>
+      <p id="fileNameLabel" style="margin-top:10px;font-weight:600;color:var(--blue-dark);"></p>
+    </div>
+    <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" hidden />
+  </div>
+
+  <div class="panel">
+    <div class="panel__head"><h2>2. Preview</h2></div>
+    <div id="previewTable"><p style="color:var(--navy-60);">No file selected yet.</p></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel__head"><h2>3. Validation</h2></div>
+    <div class="validation-msg" id="validationMsg" style="display:none;"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel__head"><h2>4. Save</h2></div>
+    <form id="uploadForm" class="form-grid">
+      <div id="targetTestWrap">
+        <label for="targetTest">Save these questions to</label>
+        <select id="targetTest"><option value="">Select a test...</option></select>
+      </div>
+      <p style="font-size:0.85rem;color:var(--navy-60);"><strong id="validCount">0</strong> valid question(s) ready to save.</p>
+      <button type="submit" class="btn btn--primary" id="saveBtn" disabled>Save to Firestore</button>
+    </form>
+  </div>
+
+  <div class="panel" id="importCompletePanel" style="display:none;"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script type="module">
+  import { guardAdminPage } from "./js/auth.js";
+  import { renderShell } from "./js/dashboard.js";
+  import { initUploadFlow } from "./js/upload.js";
+
+  guardAdminPage().then(() => {
+    renderShell("upload");
+    initUploadFlow();
+  });
+
+</script>
+</body>
+</html>

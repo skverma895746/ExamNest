@@ -1,0 +1,51 @@
+rules_version = '2';
+
+// -----------------------------------------------------------------------------
+// ExamNest Firestore rules
+//
+// Data model:
+//   tests/{testId}                     - test metadata
+//   tests/{testId}/questions/{qId}     - questions for that test
+//   attempts/{attemptId}                - anonymous candidate attempts
+//   settings/global                     - admin-configured defaults
+//
+// Public candidates never sign in, so every "public" rule below checks the
+// document's own fields (e.g. status == "published") rather than request.auth.
+// The admin is the only signed-in identity in this app, so `isAdmin()` is just
+// "is there a logged-in user at all."
+// -----------------------------------------------------------------------------
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null;
+    }
+
+    match /tests/{testId} {
+      // Anyone can read a published test; only the admin can read drafts.
+      allow read: if resource.data.status == "published" || isAdmin();
+      allow create, update, delete: if isAdmin();
+
+      match /questions/{questionId} {
+        // Candidates need question content to take a published test, but
+        // should not be able to list an unpublished test's questions.
+        allow read: if get(/databases/$(database)/documents/tests/$(testId)).data.status == "published" || isAdmin();
+        allow create, update, delete: if isAdmin();
+      }
+    }
+
+    match /attempts/{attemptId} {
+      // Anyone (including anonymous candidates) can submit an attempt, but
+      // attempts can never be edited or deleted once written, and only the
+      // admin can read them back for analytics.
+      allow create: if true;
+      allow read: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    match /settings/{docId} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

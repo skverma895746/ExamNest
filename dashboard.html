@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="Cache-Control" content="no-store" />
+<title>Dashboard — ExamNest Admin</title>
+<link rel="stylesheet" href="css/style.css" />
+<link rel="stylesheet" href="css/dashboard.css" />
+<link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body>
+
+<div id="adminMain" class="admin-main">
+
+  <div class="admin-header">
+    <div>
+      <h1 id="pageTitle">Dashboard</h1>
+      <p>An overview of your tests, questions and candidate activity.</p>
+    </div>
+  </div>
+
+  <div class="admin-tabs">
+    <button class="admin-tab is-active" data-tab="overview">Overview</button>
+    <button class="admin-tab" data-tab="mocktests">Mock Tests</button>
+  </div>
+
+  <!-- Overview -->
+  <div class="tab-panel is-active" id="panel-overview">
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-card__label">Total Tests</div>
+        <div class="stat-card__value is-loading" id="statTotalTests">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__label">Total Questions</div>
+        <div class="stat-card__value is-loading" id="statTotalQuestions">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__label">Total Attempts</div>
+        <div class="stat-card__value is-loading" id="statTotalAttempts">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__label">Latest Test</div>
+        <div class="stat-card__value is-loading" style="font-size:1.15rem" id="statLatestTest">—</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel__head">
+        <h2>Quick actions</h2>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <button class="btn btn--primary" id="quickCreateTestBtn">+ Create Test</button>
+        <a href="question-bank.html" class="btn btn--soft">Question Bank</a>
+        <a href="results-admin.html" class="btn btn--ghost">View Results</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mock Tests -->
+  <div class="tab-panel" id="panel-mocktests">
+    <div class="panel">
+      <div class="panel__head">
+        <h2>Mock Tests</h2>
+        <button class="btn btn--primary btn--sm" id="createTestBtn">+ Create Test</button>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Title</th><th>Duration</th><th>Negative marking</th><th>Status</th><th>Created</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="mockTestsBody">
+            <tr><td colspan="6">Loading tests...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Create / Edit Test Modal -->
+<div class="modal-backdrop" id="testModalBackdrop">
+  <div class="modal">
+    <h2 id="testModalTitle">Create Test</h2>
+    <p id="testModalHint" style="font-size:0.82rem;color:var(--navy-60);margin-bottom:16px;display:none;">
+      Saving publishes this test immediately and takes you straight to Upload Questions.
+    </p>
+    <form id="testModalForm" class="form-grid">
+      <div>
+        <label for="ttTitle">Title</label>
+        <input type="text" name="title" id="ttTitle" required />
+      </div>
+      <div>
+        <label for="ttDesc">Description</label>
+        <textarea name="description" id="ttDesc" rows="3"></textarea>
+      </div>
+      <div class="form-row">
+        <div>
+          <label for="ttDuration">Duration (minutes)</label>
+          <input type="number" name="duration" id="ttDuration" min="1" value="60" />
+        </div>
+        <div>
+          <label for="ttNeg">Negative marking (per wrong answer)</label>
+          <input type="number" name="negativeMarking" id="ttNeg" min="0" step="0.25" value="0" />
+        </div>
+      </div>
+      <div>
+        <label for="ttDifficulty">Difficulty</label>
+        <select name="difficulty" id="ttDifficulty">
+          <option value="easy">Easy</option>
+          <option value="medium" selected>Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+      </div>
+      <div class="checkbox-row"><input type="checkbox" name="shuffleQuestions" id="ttShuffleQ" /><label for="ttShuffleQ" style="margin:0">Shuffle questions</label></div>
+      <div class="checkbox-row"><input type="checkbox" name="shuffleOptions" id="ttShuffleO" /><label for="ttShuffleO" style="margin:0">Shuffle options</label></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn--ghost" id="testModalCancel">Cancel</button>
+        <button type="submit" class="btn btn--primary">Save Test</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script type="module">
+  import { guardAdminPage } from "./js/auth.js";
+  import {
+    renderShell,
+    loadOverviewStats,
+    loadMockTestsTable,
+    wireMockTestActions,
+  } from "./js/dashboard.js";
+  import { $, $all } from "./js/utils.js";
+
+  guardAdminPage().then(() => {
+    renderShell("dashboard");
+    loadOverviewStats();
+    wireMockTestActions();
+    wireTabs();
+
+    $("#quickCreateTestBtn")?.addEventListener("click", () => {
+      document.querySelector('[data-tab="mocktests"]').click();
+      $("#createTestBtn")?.click();
+    });
+  });
+
+  function wireTabs() {
+    const tabs = $all(".admin-tab");
+    const panels = $all(".tab-panel");
+
+    function activate(key) {
+      tabs.forEach((t) => t.classList.toggle("is-active", t.dataset.tab === key));
+      panels.forEach((p) => p.classList.toggle("is-active", p.id === `panel-${key}`));
+    }
+
+    tabs.forEach((tab) =>
+      tab.addEventListener("click", () => {
+        window.location.hash = tab.dataset.tab;
+        activate(tab.dataset.tab);
+        if (tab.dataset.tab === "mocktests") loadMockTestsTable();
+      })
+    );
+
+    const initial = window.location.hash.replace("#", "") || "overview";
+    activate(initial);
+    if (initial === "mocktests") loadMockTestsTable();
+  }
+</script>
+</body>
+</html>

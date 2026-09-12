@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="Cache-Control" content="no-store" />
+<title>Result — ExamNest</title>
+<link rel="stylesheet" href="css/style.css" />
+<link rel="stylesheet" href="css/result.css" />
+<link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body>
+
+<header class="navbar" id="navbar">
+  <div class="container navbar__inner">
+    <a href="index.html" class="brand"><span class="brand__mark">EN</span>ExamNest</a>
+    <nav class="navbar__links">
+      <a href="get-test.html" class="btn btn--ghost">Get Test</a>
+      <button class="hamburger" id="hamburgerBtn" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<div id="resultRoot">
+  <section class="result-hero">
+    <div class="container">
+      <h1 id="resultTestTitle">Loading result...</h1>
+      <p id="resultSubline"></p>
+    </div>
+  </section>
+
+  <div class="container">
+    <div class="result-cards">
+      <div class="result-card result-card--score"><div class="result-card__value" id="cardScore">—</div><div class="result-card__label">Score</div></div>
+      <div class="result-card"><div class="result-card__value" id="cardAccuracy">—</div><div class="result-card__label">Accuracy</div></div>
+      <div class="result-card result-card--correct"><div class="result-card__value" id="cardCorrect">—</div><div class="result-card__label">Correct</div></div>
+      <div class="result-card result-card--wrong"><div class="result-card__value" id="cardWrong">—</div><div class="result-card__label">Wrong</div></div>
+      <div class="result-card result-card--unattempted"><div class="result-card__value" id="cardUnattempted">—</div><div class="result-card__label">Unattempted</div></div>
+      <div class="result-card"><div class="result-card__value" id="cardTime">—</div><div class="result-card__label">Time Used</div></div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="chart-panel">
+        <h3>Accuracy</h3>
+        <div id="accuracyPie" style="width:140px;height:140px;border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;">
+          <div style="width:96px;height:96px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.1rem;" id="accuracyPieLabel">—</div>
+        </div>
+        <p style="font-size:0.8rem;color:var(--navy-60);">Correct vs. wrong, among attempted questions</p>
+      </div>
+
+      <div class="chart-panel">
+        <h3>Performance</h3>
+        <div class="bar-chart" id="performanceChart"></div>
+      </div>
+
+      <div class="chart-panel">
+        <h3>Time Distribution</h3>
+        <div style="padding-top:30px;">
+          <div class="time-bar-track"><div class="time-bar-fill" id="timeBarFill" style="width:0%"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:var(--navy-60);">
+            <span>Used: <strong id="timeUsedLabel">—</strong></span>
+            <span>Total: <strong id="timeTotalLabel">—</strong></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="result-actions">
+      <button class="btn btn--primary" id="retakeBtn">Retake Test</button>
+      <a href="get-test.html" class="btn btn--ghost">Back Home</a>
+      <button class="btn btn--soft" id="reviewBtn">Review Answers</button>
+    </div>
+  </div>
+
+  <section id="reviewSection" style="padding-bottom:60px;">
+    <div class="container">
+      <div class="section__head">
+        <h2>Question Review</h2>
+      </div>
+      <div class="review-filters">
+        <button class="review-filter is-active" data-filter="all">All</button>
+        <button class="review-filter" data-filter="correct">Correct</button>
+        <button class="review-filter" data-filter="wrong">Wrong</button>
+        <button class="review-filter" data-filter="unattempted">Unattempted</button>
+      </div>
+      <div id="reviewList" style="max-width:760px;margin:0 auto;"></div>
+    </div>
+  </section>
+</div>
+
+<script type="module">
+  import { initResult } from "./js/result.js";
+  import { initNavbar } from "./js/utils.js";
+  initNavbar(`<a href="get-test.html" class="btn btn--ghost btn--block">Get Test</a>`);
+  initResult();
+</script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Instructions — ExamNest</title>
+<link rel="stylesheet" href="css/style.css" />
+<link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body>
+
+<header class="navbar" id="navbar">
+  <div class="container navbar__inner">
+    <a href="index.html" class="brand"><span class="brand__mark">EN</span>ExamNest</a>
+    <nav class="navbar__links">
+      <a href="get-test.html" class="btn btn--ghost">Get Test</a>
+      <a href="login.html" class="btn btn--primary">Admin Login</a>
+      <button class="hamburger" id="hamburgerBtn" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main class="instructions-wrap" id="instructionsWrap">
+  <div class="skeleton" style="height:420px;"></div>
+</main>
+
+<script type="module">
+  import { db } from "./js/firebase.js";
+  import { doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { $, qs, escapeHtml, initNavbar } from "./js/utils.js";
+
+  initNavbar(`
+    <a href="get-test.html" class="btn btn--ghost btn--block">Get Test</a>
+    <a href="login.html" class="btn btn--primary btn--block">Admin Login</a>
+  `);
+
+  const testId = qs("testId");
+  const wrap = $("#instructionsWrap");
+
+  // No testId at all — this page must never be opened on its own.
+  if (!testId) {
+    window.location.replace("get-test.html");
+  } else {
+    loadTest();
+  }
+
+  async function loadTest() {
+    try {
+      const snap = await getDoc(doc(db, "tests", testId));
+      if (!snap.exists() || snap.data().status !== "published") {
+        // Missing or unpublished test — bounce back rather than dead-end.
+        window.location.replace("get-test.html");
+        return;
+      }
+      const test = { id: snap.id, ...snap.data() };
+      const qSnap = await getDocs(collection(db, "tests", testId, "questions"));
+      render(test, qSnap.size);
+    } catch (err) {
+      console.error(err);
+      wrap.innerHTML = `
+        <div class="instructions-card" style="text-align:center;">
+          <h1>Couldn't load this test</h1>
+          <p style="color:var(--navy-60);margin:10px 0 20px;">Please check your connection and try again.</p>
+          <a href="get-test.html" class="btn btn--primary">Back to tests</a>
+        </div>`;
+    }
+  }
+
+  function render(test, questionCount) {
+    wrap.innerHTML = `
+      <div class="instructions-card">
+        <span class="eyebrow-badge">📋 Before you begin</span>
+        <h1>${escapeHtml(test.title)}</h1>
+        <p style="color:var(--navy-60);">${escapeHtml(test.description || "")}</p>
+
+        <div class="instructions-meta">
+          <div><strong>${questionCount}</strong><span>Questions</span></div>
+          <div><strong>${test.duration ?? 0} min</strong><span>Duration</span></div>
+          <div><strong>${test.negativeMarking ?? 0}</strong><span>Negative Marking</span></div>
+        </div>
+
+        <ul class="instructions-rules">
+          <li>The timer starts the moment you click <strong>Start Test</strong> and cannot be paused.</li>
+          <li>Use <strong>Save &amp; Next</strong> to record an answer and move on, or <strong>Mark for Review</strong> to flag a question.</li>
+          <li>${test.negativeMarking ? `${test.negativeMarking} mark(s) will be deducted for every wrong answer.` : "There is no negative marking on this test."}</li>
+          <li>Your answers are auto-saved as you go, so a brief connection drop won't lose your progress.</li>
+          <li>When the timer reaches zero, the test <strong>auto-submits</strong> exactly as it stands — unattempted questions are scored as unattempted.</li>
+          <li>Once submitted, answers are locked and cannot be changed — including with the browser Back button.</li>
+        </ul>
+
+        <label class="instructions-ack">
+          <input type="checkbox" id="ackCheckbox" />
+          <span>I have read and understood all instructions.</span>
+        </label>
+
+        <button class="btn btn--primary btn--block" id="startBtn" disabled>Start Test</button>
+      </div>
+    `;
+
+    const checkbox = $("#ackCheckbox");
+    const startBtn = $("#startBtn");
+    checkbox.addEventListener("change", () => {
+      startBtn.disabled = !checkbox.checked;
+    });
+    startBtn.addEventListener("click", () => {
+      // Flags that instructions were accepted for this exact test — exam.html
+      // checks this and refuses to load if someone jumps the flow.
+      sessionStorage.setItem("examnest_instructions_ack_" + test.id, "1");
+      window.location.href = `exam.html?testId=${encodeURIComponent(test.id)}`;
+    });
+  }
+</script>
+</body>
+</html>

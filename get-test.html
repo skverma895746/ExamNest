@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Get Test — ExamNest</title>
+<link rel="stylesheet" href="css/style.css" />
+<link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body>
+
+<header class="navbar" id="navbar">
+  <div class="container navbar__inner">
+    <a href="index.html" class="brand"><span class="brand__mark">EN</span>ExamNest</a>
+    <nav class="navbar__links">
+      <a href="get-test.html" class="btn btn--ghost">Get Test</a>
+      <a href="login.html" class="btn btn--primary">Admin Login</a>
+      <button class="hamburger" id="hamburgerBtn" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+    <div class="page-head">
+      <h1>Choose a test to begin</h1>
+      <p>Pick any published test below. No login required — your progress is tracked on this device.</p>
+    </div>
+
+    <div class="filter-bar">
+      <input type="search" id="searchInput" placeholder="Search tests by title..." aria-label="Search tests" />
+    </div>
+
+    <div id="testGrid" class="test-grid" aria-live="polite">
+      <!-- Skeletons while loading -->
+      <div class="skeleton" style="height:220px"></div>
+      <div class="skeleton" style="height:220px"></div>
+      <div class="skeleton" style="height:220px"></div>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container footer__bottom">
+    <span>© 2026 ExamNest. All rights reserved.</span>
+    <span>Practice Like the Real Exam.</span>
+  </div>
+</footer>
+
+<script type="module">
+  import { db } from "./js/firebase.js";
+  import {
+    collection,
+    query,
+    where,
+    getDocs,
+    getCountFromServer,
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { $, formatDate, debounce, escapeHtml, initNavbar } from "./js/utils.js";
+  import { getAttemptRecord } from "./js/storage.js";
+
+  initNavbar(`
+    <a href="get-test.html" class="btn btn--ghost btn--block">Get Test</a>
+    <a href="login.html" class="btn btn--primary btn--block">Admin Login</a>
+  `);
+
+  const grid = $("#testGrid");
+  let allTests = [];
+
+  async function loadTests() {
+    try {
+      const q = query(collection(db, "tests"), where("status", "==", "published"));
+      const snap = await getDocs(q);
+      allTests = [];
+      for (const docSnap of snap.docs) {
+        const data = docSnap.data();
+        let questionCount = data.questionCount;
+        if (questionCount === undefined) {
+          // Fallback: count subcollection if not denormalized on the test doc
+          try {
+            const countSnap = await getCountFromServer(
+              collection(db, "tests", docSnap.id, "questions")
+            );
+            questionCount = countSnap.data().count;
+          } catch {
+            questionCount = 0;
+          }
+        }
+        allTests.push({ id: docSnap.id, ...data, questionCount });
+      }
+      render(allTests);
+    } catch (err) {
+      console.error(err);
+      grid.innerHTML = `<div class="empty-state">Couldn't load tests right now. Please check your connection and try again.</div>`;
+    }
+  }
+
+  function render(list) {
+    if (!list.length) {
+      grid.innerHTML = `
+        <div class="empty-illustration" style="grid-column:1/-1;">
+          <div class="empty-illustration__icon">🔍</div>
+          <h3>No tests found</h3>
+          <p>Nothing matches your search yet. Try a different keyword.</p>
+        </div>`;
+      return;
+    }
+    grid.innerHTML = list
+      .map((test) => {
+        const record = getAttemptRecord(test.id);
+        const buttonLabel = record?.attempted ? "Retest" : "Start Test";
+        const difficulty = (test.difficulty || "medium").toLowerCase();
+        const difficultyLabel = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+        const historyBlock = record?.attempted
+          ? `<div class="test-card__history">
+               <span>Last attempt: ${formatDate(record.lastDate)}</span>
+               <strong>${record.lastScore}/${record.lastMax}</strong>
+             </div>`
+          : "";
+        return `
+        <article class="test-card">
+          <div class="test-card__top">
+            <h3>${escapeHtml(test.title)}</h3>
+            <div class="test-card__badges">
+              <span class="difficulty-badge difficulty-badge--${difficulty}">${difficultyLabel}</span>
+            </div>
+          </div>
+          <p class="desc">${escapeHtml(test.description || "")}</p>
+          <div class="test-card__meta">
+            <span><strong>${test.questionCount ?? 0}</strong> Questions</span>
+            <span><strong>${test.duration ?? 0}</strong> min</span>
+            <span><strong>${test.negativeMarking ? `-${test.negativeMarking}` : "0"}</strong> neg. marking</span>
+          </div>
+          ${historyBlock}
+          <a class="btn btn--primary btn--block test-card__cta" href="instructions.html?testId=${encodeURIComponent(test.id)}">${buttonLabel}</a>
+        </article>`;
+      })
+      .join("");
+  }
+
+  $("#searchInput").addEventListener(
+    "input",
+    debounce((e) => {
+      const term = e.target.value.trim().toLowerCase();
+      render(allTests.filter((t) => t.title?.toLowerCase().includes(term)));
+    }, 200)
+  );
+
+  loadTests();
+</script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="Cache-Control" content="no-store" />
+<title>Exam in progress — ExamNest</title>
+<link rel="stylesheet" href="css/style.css" />
+<link rel="stylesheet" href="css/exam.css" />
+<link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body class="exam-body">
+<div id="examRoot">
+  <div style="min-height:60vh;display:flex;align-items:center;justify-content:center;">
+    <div class="skeleton" style="width:min(600px,90vw);height:340px;"></div>
+  </div>
+</div>
+
+<script type="module">
+  import { initExam } from "./js/exam.js";
+  initExam();
+</script>
+</body>
+</html>

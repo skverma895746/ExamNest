@@ -1,0 +1,417 @@
+/* =============================================================================
+   ExamNest — responsive.css
+   Cross-cutting rules layered on top of style.css / dashboard.css / exam.css /
+   result.css. Loaded last on every page. Covers: overflow safety, fluid type
+   via clamp(), the table→card collapse for narrow admin screens, and the
+   handful of components introduced in v4.1 (instructions page, difficulty
+   badges, bulk-action bar, fullscreen warning) that need to work from 320px
+   through 1440px+.
+============================================================================= */
+
+/* ---------------------------------------------------------------------------
+   0. Safety net — nothing on any page may cause horizontal scroll.
+--------------------------------------------------------------------------- */
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+* {
+  min-width: 0; /* let flex/grid children shrink instead of overflowing */
+}
+
+img, svg, video, canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ---------------------------------------------------------------------------
+   1. Fluid type scale (clamp) for values that were previously fixed rem
+--------------------------------------------------------------------------- */
+.admin-header h1 { font-size: clamp(1.25rem, 1rem + 1.1vw, 1.6rem); }
+.stat-card__value { font-size: clamp(1.4rem, 1.1rem + 1.3vw, 1.9rem); }
+.result-card__value { font-size: clamp(1.1rem, 0.9rem + 0.9vw, 1.5rem); }
+.panel__head h2, .modal h2 { font-size: clamp(1rem, 0.9rem + 0.5vw, 1.2rem); }
+.test-card h3 { font-size: clamp(1rem, 0.9rem + 0.4vw, 1.1rem); }
+.exam-question-card__q { font-size: clamp(0.98rem, 0.88rem + 0.5vw, 1.1rem); }
+.hero h1 { font-size: clamp(1.9rem, 1.3rem + 3.2vw, 3.4rem); }
+
+/* ---------------------------------------------------------------------------
+   2. Admin shell — tighten paddings fluidly instead of stepping at one
+      breakpoint, so 375px and 425px don't feel identical to 320px.
+--------------------------------------------------------------------------- */
+.admin-main {
+  padding: clamp(16px, 3vw + 8px, 40px);
+}
+
+.panel {
+  padding: clamp(16px, 2vw + 10px, 24px);
+}
+
+.stat-grid {
+  gap: clamp(10px, 2vw, 18px);
+}
+
+@media (max-width: 480px) {
+  .admin-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .panel__head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .panel__head > * {
+    width: 100%;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   3. Tables → stacked cards below 640px. Requires each <td> to carry a
+      data-label attribute (added in dashboard.js / question-bank.js /
+      results-admin.html) so CSS can print the column header inline.
+--------------------------------------------------------------------------- */
+@media (max-width: 640px) {
+  .data-table thead {
+    display: none;
+  }
+  .data-table, .data-table tbody, .data-table tr, .data-table td {
+    display: block;
+    width: 100%;
+  }
+  .data-table tr {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 6px 14px;
+    margin-bottom: 12px;
+  }
+  .data-table td {
+    border-bottom: 1px dashed var(--border);
+    padding: 10px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    text-align: right;
+  }
+  .data-table td:last-child {
+    border-bottom: none;
+  }
+  .data-table td[data-label]::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--navy-60);
+    text-align: left;
+    flex-shrink: 0;
+  }
+  .data-table td.row-actions {
+    justify-content: flex-end;
+  }
+  .data-table td.qb-select-cell {
+    justify-content: flex-start;
+  }
+  .data-table td.qb-select-cell::before {
+    content: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   4. Touch targets — bump small admin buttons up on touch-sized screens
+--------------------------------------------------------------------------- */
+@media (max-width: 640px) {
+  .icon-btn {
+    padding: 8px 12px;
+    font-size: 0.82rem;
+  }
+  .row-actions {
+    justify-content: flex-end;
+    width: 100%;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   5. Charts — keep the three result charts from overflowing narrow screens
+--------------------------------------------------------------------------- */
+@media (max-width: 480px) {
+  .bar-chart {
+    gap: 10px;
+    height: 130px;
+  }
+  .bar-chart__bar {
+    width: 26px;
+  }
+  #accuracyPie {
+    width: 110px !important;
+    height: 110px !important;
+  }
+  #accuracyPie > div {
+    width: 76px !important;
+    height: 76px !important;
+    font-size: 0.95rem !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   6. Exam topbar — long test titles must truncate, never wrap the layout
+--------------------------------------------------------------------------- */
+.exam-topbar__title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.exam-topbar__title span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .exam-topbar {
+    padding: 10px 14px;
+  }
+  .exam-timer {
+    padding: 7px 13px;
+    font-size: 0.85rem;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   7. Difficulty badge (Get Test cards)
+--------------------------------------------------------------------------- */
+.difficulty-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.difficulty-badge--easy { background: rgba(16,185,129,0.12); color: var(--success); }
+.difficulty-badge--medium { background: rgba(245,158,11,0.14); color: #b45309; }
+.difficulty-badge--hard { background: rgba(239,68,68,0.12); color: var(--error); }
+
+.test-card__badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ---------------------------------------------------------------------------
+   8. Instructions page
+--------------------------------------------------------------------------- */
+.instructions-wrap {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: clamp(32px, 6vw, 64px) 20px 60px;
+}
+
+.instructions-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: clamp(22px, 4vw, 40px);
+  box-shadow: var(--shadow-md);
+}
+
+.instructions-card h1 {
+  font-size: clamp(1.3rem, 1.1rem + 1vw, 1.7rem);
+  margin-bottom: 6px;
+}
+
+.instructions-meta {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 20px 0 26px;
+}
+
+.instructions-meta div {
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  text-align: center;
+}
+
+.instructions-meta strong {
+  display: block;
+  font-size: 1.15rem;
+}
+
+.instructions-meta span {
+  font-size: 0.76rem;
+  color: var(--navy-60);
+}
+
+.instructions-rules {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.instructions-rules li {
+  display: flex;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: var(--navy-60);
+  line-height: 1.5;
+}
+
+.instructions-rules li::before {
+  content: "•";
+  color: var(--blue);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.instructions-ack {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--blue-10);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 22px;
+  font-size: 0.88rem;
+}
+
+.instructions-ack input {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--blue);
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .instructions-meta {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .instructions-meta div {
+    padding: 10px 6px;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   9. Question Bank — Select All header + bulk action bar
+--------------------------------------------------------------------------- */
+.bulk-action-bar {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--navy);
+  color: #fff;
+  border-radius: var(--radius-sm);
+  padding: 12px 18px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.bulk-action-bar.is-visible {
+  display: flex;
+}
+
+.bulk-action-bar__count {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.bulk-action-bar__actions {
+  display: flex;
+  gap: 10px;
+}
+
+@media (max-width: 480px) {
+  .bulk-action-bar {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+  .bulk-action-bar__actions {
+    justify-content: center;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   10. Fullscreen / tab-switch security warning
+--------------------------------------------------------------------------- */
+.exam-warning-banner {
+  display: none;
+  position: fixed;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--error);
+  color: #fff;
+  padding: 12px 22px;
+  border-radius: 999px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  z-index: 300;
+  box-shadow: var(--shadow-lg);
+  max-width: 90vw;
+  text-align: center;
+}
+
+.exam-warning-banner.is-visible {
+  display: block;
+}
+
+/* ---------------------------------------------------------------------------
+   11. Premium empty states
+--------------------------------------------------------------------------- */
+.empty-illustration {
+  text-align: center;
+  padding: clamp(36px, 6vw, 64px) 20px;
+  color: var(--navy-60);
+}
+
+.empty-illustration__icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: var(--blue-10);
+  color: var(--blue-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.7rem;
+}
+
+.empty-illustration h3 {
+  font-size: 1.05rem;
+  color: var(--navy);
+  margin-bottom: 6px;
+}
+
+.empty-illustration p {
+  font-size: 0.88rem;
+  max-width: 34ch;
+  margin: 0 auto;
+}
+
+/* ---------------------------------------------------------------------------
+   12. Generic form single-column collapse (belt-and-braces alongside the
+       per-page rules already in dashboard.css)
+--------------------------------------------------------------------------- */
+@media (max-width: 560px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  .modal {
+    padding: 20px;
+    border-radius: var(--radius);
+  }
+  .confirm-summary {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+}

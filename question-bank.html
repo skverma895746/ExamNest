@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="Cache-Control" content="no-store" />
+<title>Question Bank — ExamNest Admin</title>
+<link rel="stylesheet" href="css/style.css" />
+<link rel="stylesheet" href="css/dashboard.css" />
+<link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body>
+
+<div id="adminMain" class="admin-main">
+  <div class="admin-header">
+    <div>
+      <h1>Question Bank</h1>
+      <p>Every question across every test, searchable and editable in one place.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel__head">
+      <h2>All Questions</h2>
+    </div>
+
+    <div class="panel-toolbar" style="margin-bottom:16px;">
+      <input type="search" id="qbSearch" placeholder="Search questions..." />
+      <select id="qbTestFilter"><option value="">All tests</option></select>
+    </div>
+
+    <div class="bulk-action-bar" id="bulkActionBar">
+      <span class="bulk-action-bar__count" id="bulkActionCount">0 Questions Selected</span>
+      <div class="bulk-action-bar__actions">
+        <button class="btn btn--ghost btn--sm" id="bulkCancelBtn" style="color:#fff;border-color:rgba(255,255,255,0.4);">Cancel Selection</button>
+        <button class="btn btn--danger btn--sm" id="bulkDeleteBtn">Delete Selected</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width:36px;"><input type="checkbox" id="qbSelectAll" disabled aria-label="Select all questions" /></th>
+            <th>Question</th>
+            <th>Test</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="questionBankBody">
+          <tr><td colspan="4">Loading question bank...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Question Modal -->
+<div class="modal-backdrop" id="questionModalBackdrop">
+  <div class="modal">
+    <h2>Edit Question</h2>
+    <form id="questionModalForm" class="form-grid">
+      <div><label>Question</label><textarea name="question" rows="2" required></textarea></div>
+      <div class="form-row">
+        <div><label>Option A</label><input type="text" name="optionA" required /></div>
+        <div><label>Option B</label><input type="text" name="optionB" required /></div>
+      </div>
+      <div class="form-row">
+        <div><label>Option C</label><input type="text" name="optionC" required /></div>
+        <div><label>Option D</label><input type="text" name="optionD" required /></div>
+      </div>
+      <div><label>Correct answer (A/B/C/D)</label><input type="text" name="answer" maxlength="1" required /></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn--ghost" id="questionModalCancel">Cancel</button>
+        <button type="submit" class="btn btn--primary">Save Question</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script type="module">
+  import { guardAdminPage } from "./js/auth.js";
+  import { renderShell } from "./js/dashboard.js";
+  import { loadQuestionBank, wireQuestionBank } from "./js/question-bank.js";
+
+  guardAdminPage().then(() => {
+    renderShell("questionbank");
+    loadQuestionBank();
+    wireQuestionBank();
+
+    // Select All only makes sense once rows exist — enable it after the
+    // first load resolves and there's at least one visible row.
+    const observer = new MutationObserver(() => {
+      const hasRows = document.querySelectorAll("#questionBankBody .qb-select").length > 0;
+      document.getElementById("qbSelectAll").disabled = !hasRows;
+    });
+    observer.observe(document.getElementById("questionBankBody"), { childList: true });
+  });
+</script>
+</body>
+</html>
