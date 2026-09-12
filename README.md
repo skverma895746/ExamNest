@@ -1,75 +1,89 @@
 # ExamNest
 
-A production-ready mock test platform. Candidates take tests with no account;
-a single admin logs in to manage tests, questions and results.
+ExamNest is a lightweight CBT-style mock test platform built with plain HTML, CSS, JavaScript, and Firebase. Candidates can browse published tests, read instructions, take timed exams, resume unfinished attempts, retest after submission, and view results. Admins can manage tests, upload questions, inspect the question bank, and view submissions.
 
-Stack: vanilla HTML/CSS/JS + Firebase (Auth + Firestore + Hosting). No build
-step — everything runs directly as static files.
+## Features
 
-## 1. Create a Firebase project
+- Public test listing with Start Test, Resume, and Retest states
+- Timed exam interface with auto-save and auto-submit on time up
+- Final submit confirmation before locking answers
+- Result screen with score, accuracy, time used, and answer review
+- Admin dashboard for test management
+- Question upload and question bank editing
+- Bulk question selection and delete
+- Firestore-backed test, question, and attempt records
+- Responsive layouts for desktop and mobile
 
-1. Go to the [Firebase Console](https://console.firebase.google.com) and create a project.
-2. Enable **Authentication → Sign-in method → Email/Password**.
-3. Create exactly one admin user under **Authentication → Users** (this app is single-admin — do not create more).
-4. Enable **Firestore Database** (start in production mode).
-5. Deploy the rules in `firestore.rules` (Firestore → Rules tab, paste and Publish).
+## Project Structure
 
-## 2. Add your config
+```text
+.
+├── index.html              # Public landing page
+├── get-test.html           # Published test listing
+├── instructions.html       # Test instructions before exam
+├── exam.html               # Candidate exam screen
+├── result.html             # Candidate result and review
+├── login.html              # Admin login
+├── dashboard.html          # Admin overview and mock tests
+├── upload.html             # Question upload
+├── question-bank.html      # Question management
+├── results-admin.html      # Admin submissions view
+├── settings.html           # Admin settings and backup
+├── firestore.rules         # Firebase security rules
+├── css/
+└── js/
+```
 
-Open `js/firebase.js` and replace the placeholder `firebaseConfig` object with
-the values from **Project Settings → General → Your apps → SDK setup and
-configuration**. Every page imports from this one file, so this is the only
-place you need to edit.
+## Run Locally
 
-## 3. Seed a test (optional)
-
-You can create your first test entirely from the UI:
-1. Log in at `login.html` with the admin account you created.
-2. Dashboard → Mock Tests → **Create Test**, fill in title/duration/negative marking, save (it starts as a draft).
-3. Upload Questions → choose the test → upload a `.csv` or `.xlsx` with columns:
-   `Question, Option A, Option B, Option C, Option D, Answer`
-4. Back in Mock Tests, click **Publish** on the test so it appears on Get Test.
-
-## 4. Deploy
-
-Firebase Hosting (recommended, since it's already in your stack):
+This project has no build step. Serve the folder with any static server:
 
 ```bash
-npm install -g firebase-tools
-firebase login
-firebase init hosting   # point the public directory at this folder
+python -m http.server 4173
+```
+
+Open:
+
+```text
+http://localhost:4173
+```
+
+## Firebase Setup
+
+Firebase is initialized in:
+
+```text
+js/firebase.js
+```
+
+Update `firebaseConfig` with your Firebase project details if you move to a new Firebase project.
+
+Firestore collections used:
+
+- `tests/{testId}`
+- `tests/{testId}/questions/{questionId}`
+- `attempts/{attemptId}`
+- `settings/{docId}`
+
+Deploy Firestore rules after changing `firestore.rules`.
+
+## Admin Notes
+
+- Admin access uses Firebase Auth.
+- Candidates do not need accounts.
+- Candidate in-progress exam state and attempt summary are also stored locally in the browser for Resume/Retest UI.
+- Deleting a test removes its questions and related attempt records.
+
+## Deployment
+
+Upload or deploy the static files to your hosting provider. If using Firebase Hosting, also deploy Firestore rules so dashboard deletion permissions work correctly.
+
+```bash
 firebase deploy
 ```
 
-Any static host works too (Netlify, Vercel, GitHub Pages) — there is no
-server-side code to deploy, only static files.
+If only rules changed:
 
-## Folder structure
-
+```bash
+firebase deploy --only firestore:rules
 ```
-index.html            Landing page
-get-test.html          Public test list
-login.html             Admin login
-dashboard.html         Admin: overview, mock tests, question bank
-upload.html            Admin: CSV/XLSX question upload
-settings.html          Admin: password, defaults, backup export
-results-admin.html     Admin: all candidate attempts
-exam.html              Candidate: CBT exam interface
-result.html            Candidate: score + analysis
-
-css/                   style.css, dashboard.css, exam.css, result.css
-js/                    firebase.js, auth.js, dashboard.js, upload.js,
-                       exam.js, result.js, storage.js, utils.js
-firestore.rules        Security rules for the data model above
-```
-
-## Notes
-
-- Candidate attempt history lives in `localStorage` on each browser — there is
-  no candidate account, by design.
-- Uploaded CSV/XLSX files are parsed in-browser and never uploaded anywhere;
-  only the validated question rows are written to Firestore.
-- Admin pages (`dashboard.html`, `upload.html`, `settings.html`,
-  `results-admin.html`) all call `guardAdminPage()` before rendering anything,
-  and use `Cache-Control: no-store` plus a `pageshow`/bfcache re-check so the
-  browser Back button can never reopen them after logout.
