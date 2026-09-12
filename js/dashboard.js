@@ -9,6 +9,7 @@ import {
   deleteDoc,
   getDocs,
   getDoc,
+  getCountFromServer,
   query,
   where,
   orderBy,
@@ -26,7 +27,6 @@ const NAV_ITEMS = [
   { key: "mocktests", label: "Mock Tests", icon: "📄", href: "dashboard.html#mocktests" },
   { key: "upload", label: "Upload Questions", icon: "⬆", href: "upload.html" },
   { key: "questionbank", label: "Question Bank", icon: "🗂", href: "question-bank.html" },
-  { key: "results", label: "Results", icon: "📊", href: "results-admin.html" },
   { key: "settings", label: "Settings", icon: "⚙", href: "settings.html" },
 ];
 
@@ -95,28 +95,30 @@ export function renderShell(activeKey) {
 }
 
 // -----------------------------------------------------------------------------
-// Dashboard overview (stat cards)
+// Dashboard overview (stat cards) — Total Tests, Total Questions, Latest Test.
+// Total Attempts / results analytics were removed on purpose: this dashboard
+// no longer reads the attempts collection at all, which is the point of the
+// optimization (attempts are still written by exam.js and still cascade-
+// deleted with their test — they're just never read back for display here).
 // -----------------------------------------------------------------------------
 export async function loadOverviewStats() {
   try {
     const testsSnap = await getDocs(collection(db, "tests"));
-    const activeTestIds = new Set(testsSnap.docs.map((t) => t.id));
     let totalQuestions = 0;
     let latestTest = null;
     for (const t of testsSnap.docs) {
       const data = t.data();
-      const qSnap = await getDocs(collection(db, "tests", t.id, "questions"));
-      totalQuestions += qSnap.size;
+      // getCountFromServer costs far less than fetching every question
+      // document just to count them.
+      const countSnap = await getCountFromServer(collection(db, "tests", t.id, "questions"));
+      totalQuestions += countSnap.data().count;
       if (!latestTest || (data.createdAt?.seconds || 0) > (latestTest.createdAt?.seconds || 0)) {
         latestTest = { id: t.id, ...data };
       }
     }
-    const attemptsSnap = await getDocs(collection(db, "attempts"));
-    const activeAttempts = attemptsSnap.docs.filter((a) => activeTestIds.has(a.data().testId));
 
     setStat("statTotalTests", testsSnap.size);
     setStat("statTotalQuestions", totalQuestions);
-    setStat("statTotalAttempts", activeAttempts.length);
     setStat("statLatestTest", latestTest ? latestTest.title : "—");
   } catch (err) {
     console.error(err);
@@ -198,18 +200,10 @@ export function wireMockTestActions() {
         danger: true,
       });
       if (ok) {
-        btn.disabled = true;
-        btn.textContent = "Deleting...";
-        try {
-          await deleteTestCascade(testId);
-          toast("Test and all related data deleted.", "success");
-          await Promise.all([loadMockTestsTable(), loadOverviewStats()]);
-        } catch (err) {
-          console.error(err);
-          toast("Couldn't delete the test completely. Please try again.", "error");
-          btn.disabled = false;
-          btn.textContent = "Delete";
-        }
+        await deleteTestCascade(testId);
+        toast("Test and all related data deleted.", "success");
+        loadMockTestsTable();
+        loadOverviewStats();
       }
     } else if (action === "toggle") {
       const ref = doc(db, "tests", testId);

@@ -926,6 +926,60 @@ p {
 .toast--error { background: var(--error); }
 .toast--warning { background: var(--warning); color: var(--navy); }
 
+/* ---------------------------------------------------------------------------
+   Modal shell — shared by admin modals (create/edit test, edit question,
+   confirmDialog()) AND the public exam page's Submit Test confirmation.
+   Lives here (not dashboard.css) because non-admin pages need it too.
+--------------------------------------------------------------------------- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--fast) var(--ease);
+}
+
+.modal-backdrop.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal {
+  background: #fff;
+  border-radius: var(--radius);
+  max-width: 520px;
+  width: 100%;
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: 28px;
+  box-shadow: var(--shadow-lg);
+  transform: translateY(12px);
+  transition: transform var(--fast) var(--ease);
+}
+
+.modal-backdrop.is-open .modal {
+  transform: translateY(0);
+}
+
+.modal h2 {
+  font-size: 1.15rem;
+  margin-bottom: 18px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
 /* =============================================================================
    Get Test page
 ============================================================================= */

@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta http-equiv="Cache-Control" content="no-store" />
 <title>Question Bank — ExamNest Admin</title>
-<link rel="icon" href="assets/icons/favicon.svg" />
 <link rel="stylesheet" href="css/style.css" />
 <link rel="stylesheet" href="css/dashboard.css" />
 <link rel="stylesheet" href="css/responsive.css" />
@@ -16,18 +15,26 @@
   <div class="admin-header">
     <div>
       <h1>Question Bank</h1>
-      <p>Every question across every test, searchable and editable in one place.</p>
+      <p>Pick an exam, then click View to load its questions — nothing is read from Firestore until you do.</p>
     </div>
   </div>
 
   <div class="panel">
     <div class="panel__head">
-      <h2>All Questions</h2>
+      <h2>Select an exam</h2>
     </div>
 
-    <div class="panel-toolbar" style="margin-bottom:16px;">
-      <input type="search" id="qbSearch" placeholder="Search questions..." />
-      <select id="qbTestFilter"><option value="">All tests</option></select>
+    <div class="qb-picker">
+      <select id="qbTestSelect"><option value="">Select an exam...</option></select>
+      <button class="btn btn--primary" id="qbViewBtn" disabled>View</button>
+    </div>
+    <p id="qbCacheNote" style="font-size:0.8rem;color:var(--navy-60);margin-top:10px;display:none;"></p>
+  </div>
+
+  <div class="panel" id="qbResultsPanel" style="display:none;">
+    <div class="panel__head">
+      <h2 id="qbResultsTitle">Questions</h2>
+      <input type="search" id="qbSearch" placeholder="Search within these questions..." style="max-width:260px;" />
     </div>
 
     <div class="bulk-action-bar" id="bulkActionBar">
@@ -43,16 +50,26 @@
         <thead>
           <tr>
             <th style="width:36px;"><input type="checkbox" id="qbSelectAll" disabled aria-label="Select all questions" /></th>
+            <th style="width:40px;">#</th>
             <th>Question</th>
-            <th>Test</th>
+            <th>Option A</th>
+            <th>Option B</th>
+            <th>Option C</th>
+            <th>Option D</th>
+            <th>Answer</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody id="questionBankBody">
-          <tr><td colspan="4">Loading question bank...</td></tr>
         </tbody>
       </table>
     </div>
+  </div>
+
+  <div class="empty-illustration" id="qbEmptyState">
+    <div class="empty-illustration__icon">🗂</div>
+    <h3>No exam selected yet</h3>
+    <p>Choose an exam above and click View to load its questions.</p>
   </div>
 </div>
 
@@ -82,20 +99,11 @@
 <script type="module">
   import { guardAdminPage } from "./js/auth.js";
   import { renderShell } from "./js/dashboard.js";
-  import { loadQuestionBank, wireQuestionBank } from "./js/question-bank.js";
+  import { initQuestionBank } from "./js/question-bank.js";
 
   guardAdminPage().then(() => {
     renderShell("questionbank");
-    loadQuestionBank();
-    wireQuestionBank();
-
-    // Select All only makes sense once rows exist — enable it after the
-    // first load resolves and there's at least one visible row.
-    const observer = new MutationObserver(() => {
-      const hasRows = document.querySelectorAll("#questionBankBody .qb-select").length > 0;
-      document.getElementById("qbSelectAll").disabled = !hasRows;
-    });
-    observer.observe(document.getElementById("questionBankBody"), { childList: true });
+    initQuestionBank();
   });
 </script>
 </body>

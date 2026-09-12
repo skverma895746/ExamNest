@@ -1,4 +1,10 @@
 // js/question-bank.js
+//
+// Firestore read optimization: opening this page reads only the exam list
+// (collection "tests"). Selecting an exam from the dropdown reads nothing.
+// Only clicking "View" reads that exam's questions subcollection — and only
+// the first time; after that, the in-memory cache below is reused for the
+// rest of this page's session, so re-viewing the same exam costs zero reads.
 import { db } from "./firebase.js";
 import {
   collection,
@@ -9,126 +15,61 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { $, $all, escapeHtml, toast, debounce, confirmDialog } from "./utils.js";
 
-let allQuestions = []; // { testId, testTitle, id, ...question }
-let visibleQuestions = []; // after search/filter — what Select All operates on
+const testTitles = {}; // testId -> title, filled once from the lightweight exam-list read
+const questionCache = {}; // testId -> question array, filled lazily on first View
 
-export async function loadQuestionBank() {
-  const tbody = $("#questionBankBody");
-  const testFilter = $("#qbTestFilter");
-  if (!tbody) return;
-  tbody.innerHTML = `<tr><td colspan="4">Loading question bank...</td></tr>`;
+let currentTestId = null;
+let visibleQuestions = []; // currentTestId's questions after the local search filter
+
+export async function initQuestionBank() {
+  await loadTestDropdown();
+  wireControls();
+}
+
+/** The ONLY read that happens on page load: the exam list itself. */
+async function loadTestDropdown() {
+  const select = $("#qbTestSelect");
   try {
-    const testsSnap = await getDocs(collection(db, "tests"));
-    allQuestions = [];
-    const options = [`<option value="">All tests</option>`];
-    for (const t of testsSnap.docs) {
-      const data = t.data();
-      options.push(`<option value="${t.id}">${escapeHtml(data.title)}</option>`);
-      const qSnap = await getDocs(collection(db, "tests", t.id, "questions"));
-      qSnap.forEach((q) => {
-        allQuestions.push({ testId: t.id, testTitle: data.title, id: q.id, ...q.data() });
-      });
-    }
-    if (testFilter) testFilter.innerHTML = options.join("");
-    visibleQuestions = allQuestions;
-    renderTable(visibleQuestions);
-    updateBulkBar();
+    const snap = await getDocs(collection(db, "tests"));
+    const options = [`<option value="">Select an exam...</option>`];
+    snap.forEach((d) => {
+      testTitles[d.id] = d.data().title;
+      options.push(`<option value="${d.id}">${escapeHtml(d.data().title)}</option>`);
+    });
+    select.innerHTML = options.join("");
   } catch (err) {
     console.error(err);
-    tbody.innerHTML = `<tr><td colspan="4">Couldn't load the question bank.</td></tr>`;
+    toast("Couldn't load the exam list.", "error");
   }
 }
 
-function renderTable(list) {
-  const tbody = $("#questionBankBody");
-  if (!list.length) {
-    tbody.innerHTML = `
-      <tr><td colspan="4">
-        <div class="empty-illustration">
-          <div class="empty-illustration__icon">🗂</div>
-          <h3>No questions found</h3>
-          <p>Try a different search, filter, or upload a fresh question set.</p>
-        </div>
-      </td></tr>`;
-    setSelectAllState(false, true);
-    return;
-  }
-  tbody.innerHTML = list
-    .map(
-      (q) => `
-      <tr data-test-id="${q.testId}" data-q-id="${q.id}">
-        <td class="qb-select-cell"><input type="checkbox" class="qb-select" /></td>
-        <td data-label="Question">${escapeHtml(q.question).slice(0, 90)}${q.question.length > 90 ? "…" : ""}</td>
-        <td data-label="Test">${escapeHtml(q.testTitle)}</td>
-        <td data-label="Actions" class="row-actions">
-          <button class="icon-btn" data-action="edit-q">Edit</button>
-          <button class="icon-btn icon-btn--danger" data-action="delete-q">Delete</button>
-        </td>
-      </tr>`
-    )
-    .join("");
-  setSelectAllState(false, false);
-}
-
-// -----------------------------------------------------------------------------
-// Select All + bulk action bar
-// -----------------------------------------------------------------------------
-function setSelectAllState(checked, disabled) {
-  const selectAll = $("#qbSelectAll");
-  if (!selectAll) return;
-  selectAll.checked = checked;
-  selectAll.indeterminate = false;
-  selectAll.disabled = disabled;
-}
-
-function updateBulkBar() {
-  const tbody = $("#questionBankBody");
-  const bar = $("#bulkActionBar");
-  const countLabel = $("#bulkActionCount");
-  if (!tbody || !bar) return;
-  const checked = $all(".qb-select:checked", tbody);
-  if (checked.length > 0) {
-    bar.classList.add("is-visible");
-    countLabel.textContent = `${checked.length} Question${checked.length === 1 ? "" : "s"} Selected`;
-  } else {
-    bar.classList.remove("is-visible");
-  }
-
-  const selectAll = $("#qbSelectAll");
-  const allBoxes = $all(".qb-select", tbody);
-  if (selectAll && allBoxes.length) {
-    selectAll.checked = checked.length === allBoxes.length;
-    selectAll.indeterminate = checked.length > 0 && checked.length < allBoxes.length;
-  }
-}
-
-export function wireQuestionBank() {
+function wireControls() {
+  const select = $("#qbTestSelect");
+  const viewBtn = $("#qbViewBtn");
   const searchInput = $("#qbSearch");
-  const testFilter = $("#qbTestFilter");
   const tbody = $("#questionBankBody");
   const selectAll = $("#qbSelectAll");
   const bulkDeleteBtn = $("#bulkDeleteBtn");
   const bulkCancelBtn = $("#bulkCancelBtn");
-  if (!tbody) return;
 
-  function applyFilters() {
-    const term = (searchInput?.value || "").toLowerCase();
-    const testId = testFilter?.value || "";
-    visibleQuestions = allQuestions.filter((q) => {
-      const matchesTerm = q.question.toLowerCase().includes(term);
-      const matchesTest = !testId || q.testId === testId;
-      return matchesTerm && matchesTest;
-    });
-    renderTable(visibleQuestions);
-    updateBulkBar();
-  }
+  // Selecting an exam only enables the View button — no Firestore read here.
+  select.addEventListener("change", () => {
+    viewBtn.disabled = !select.value;
+  });
 
-  searchInput?.addEventListener("input", debounce(applyFilters, 200));
-  testFilter?.addEventListener("change", applyFilters);
+  viewBtn.addEventListener("click", () => handleView(select.value));
 
-  // Select All applies to the currently visible (searched/filtered) rows —
-  // and stays in sync if the person edits the search after selecting.
-  selectAll?.addEventListener("change", () => {
+  searchInput.addEventListener(
+    "input",
+    debounce(() => {
+      const term = searchInput.value.trim().toLowerCase();
+      const all = questionCache[currentTestId] || [];
+      visibleQuestions = term ? all.filter((q) => q.question.toLowerCase().includes(term)) : all;
+      renderTable(visibleQuestions);
+    }, 200)
+  );
+
+  selectAll.addEventListener("change", () => {
     $all(".qb-select", tbody).forEach((cb) => (cb.checked = selectAll.checked));
     updateBulkBar();
   });
@@ -141,75 +82,169 @@ export function wireQuestionBank() {
     const btn = e.target.closest("button[data-action]");
     if (!btn) return;
     const row = btn.closest("tr");
-    const testId = row.dataset.testId;
     const qId = row.dataset.qId;
 
     if (btn.dataset.action === "delete-q") {
       const ok = await confirmDialog({
         title: "Delete this question?",
-        body: "This question will be permanently removed from its test.",
+        body: "This question will be permanently removed from this exam.",
         confirmLabel: "Delete",
         danger: true,
       });
-      if (ok) {
-        await deleteDoc(doc(db, "tests", testId, "questions", qId));
-        await refreshQuestionCounts([testId]);
-        toast("Question deleted.", "success");
-        await loadQuestionBank();
-      }
+      if (ok) await deleteQuestion(qId);
     } else if (btn.dataset.action === "edit-q") {
-      const q = allQuestions.find((x) => x.testId === testId && x.id === qId);
-      openQuestionEditModal(q);
+      const q = (questionCache[currentTestId] || []).find((x) => x.id === qId);
+      if (q) openQuestionEditModal(q);
     }
   });
 
-  bulkDeleteBtn?.addEventListener("click", async () => {
+  bulkDeleteBtn.addEventListener("click", async () => {
     const checked = $all(".qb-select:checked", tbody);
     if (!checked.length) return;
     const ok = await confirmDialog({
       title: `Delete ${checked.length} question(s)?`,
-      body: "Selected questions will be permanently removed from their tests. This cannot be undone.",
+      body: "Selected questions will be permanently removed from this exam. This cannot be undone.",
       confirmLabel: "Delete Selected",
       danger: true,
     });
     if (!ok) return;
-    bulkDeleteBtn.disabled = true;
-    bulkDeleteBtn.textContent = "Deleting...";
-    try {
-      const affectedTestIds = new Set();
-      const deletes = checked.map((cb) => {
-        const row = cb.closest("tr");
-        affectedTestIds.add(row.dataset.testId);
-        return deleteDoc(doc(db, "tests", row.dataset.testId, "questions", row.dataset.qId));
-      });
-      await Promise.all(deletes);
-      await refreshQuestionCounts([...affectedTestIds]);
-      toast("Selected questions deleted.", "success");
-      await loadQuestionBank();
-    } catch (err) {
-      console.error(err);
-      toast("Couldn't delete selected questions. Please try again.", "error");
-    } finally {
-      bulkDeleteBtn.disabled = false;
-      bulkDeleteBtn.textContent = "Delete Selected";
+    const ids = checked.map((cb) => cb.closest("tr").dataset.qId);
+    for (const qId of ids) {
+      await deleteDoc(doc(db, "tests", currentTestId, "questions", qId));
     }
+    questionCache[currentTestId] = (questionCache[currentTestId] || []).filter((q) => !ids.includes(q.id));
+    toast("Selected questions deleted.", "success");
+    applySearchAndRender();
   });
 
-  bulkCancelBtn?.addEventListener("click", () => {
+  bulkCancelBtn.addEventListener("click", () => {
     $all(".qb-select", tbody).forEach((cb) => (cb.checked = false));
     updateBulkBar();
   });
 
-  $("#questionModalForm")?.addEventListener("submit", saveQuestionEdit);
-  $("#questionModalCancel")?.addEventListener("click", () => {
+  $("#questionModalForm").addEventListener("submit", saveQuestionEdit);
+  $("#questionModalCancel").addEventListener("click", () => {
     $("#questionModalBackdrop").classList.remove("is-open");
   });
+}
+
+async function handleView(testId) {
+  if (!testId) return;
+  currentTestId = testId;
+  $("#qbSearch").value = "";
+
+  const cacheNote = $("#qbCacheNote");
+  const fromCache = Object.prototype.hasOwnProperty.call(questionCache, testId);
+
+  if (!fromCache) {
+    $("#qbViewBtn").disabled = true;
+    $("#qbViewBtn").textContent = "Loading...";
+    try {
+      const qSnap = await getDocs(collection(db, "tests", testId, "questions"));
+      questionCache[testId] = qSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    } catch (err) {
+      console.error(err);
+      toast("Couldn't load questions for this exam.", "error");
+      $("#qbViewBtn").disabled = false;
+      $("#qbViewBtn").textContent = "View";
+      return;
+    }
+    $("#qbViewBtn").disabled = false;
+    $("#qbViewBtn").textContent = "View";
+  }
+
+  cacheNote.style.display = "block";
+  cacheNote.textContent = fromCache
+    ? "Loaded from cache — no new Firestore read for this exam."
+    : "Loaded fresh from Firestore and cached for this session.";
+
+  $("#qbResultsTitle").textContent = `Questions — ${escapeHtml(testTitles[testId] || "")}`;
+  $("#qbResultsPanel").style.display = "block";
+  $("#qbEmptyState").style.display = "none";
+
+  applySearchAndRender();
+}
+
+function applySearchAndRender() {
+  const term = $("#qbSearch").value.trim().toLowerCase();
+  const all = questionCache[currentTestId] || [];
+  visibleQuestions = term ? all.filter((q) => q.question.toLowerCase().includes(term)) : all;
+  renderTable(visibleQuestions);
+}
+
+function renderTable(list) {
+  const tbody = $("#questionBankBody");
+  if (!list.length) {
+    tbody.innerHTML = `
+      <tr><td colspan="9">
+        <div class="empty-illustration">
+          <div class="empty-illustration__icon">🔍</div>
+          <h3>No questions found</h3>
+          <p>This exam has no questions yet, or none match your search.</p>
+        </div>
+      </td></tr>`;
+    setSelectAllState(false, true);
+    return;
+  }
+  tbody.innerHTML = list
+    .map(
+      (q, i) => `
+      <tr data-q-id="${q.id}">
+        <td class="qb-select-cell"><input type="checkbox" class="qb-select" /></td>
+        <td data-label="#">${i + 1}</td>
+        <td data-label="Question">${escapeHtml(q.question)}</td>
+        <td data-label="Option A" class="${q.answer === "A" ? "qb-correct-option" : ""}">${escapeHtml(q.optionA)}</td>
+        <td data-label="Option B" class="${q.answer === "B" ? "qb-correct-option" : ""}">${escapeHtml(q.optionB)}</td>
+        <td data-label="Option C" class="${q.answer === "C" ? "qb-correct-option" : ""}">${escapeHtml(q.optionC)}</td>
+        <td data-label="Option D" class="${q.answer === "D" ? "qb-correct-option" : ""}">${escapeHtml(q.optionD)}</td>
+        <td data-label="Answer"><span class="qb-answer-pill">${q.answer}</span></td>
+        <td data-label="Actions" class="row-actions">
+          <button class="icon-btn" data-action="edit-q">Edit</button>
+          <button class="icon-btn icon-btn--danger" data-action="delete-q">Delete</button>
+        </td>
+      </tr>`
+    )
+    .join("");
+  setSelectAllState(false, false);
+  updateBulkBar();
+}
+
+function setSelectAllState(checked, disabled) {
+  const selectAll = $("#qbSelectAll");
+  selectAll.checked = checked;
+  selectAll.indeterminate = false;
+  selectAll.disabled = disabled;
+}
+
+function updateBulkBar() {
+  const tbody = $("#questionBankBody");
+  const bar = $("#bulkActionBar");
+  const countLabel = $("#bulkActionCount");
+  const checked = $all(".qb-select:checked", tbody);
+  if (checked.length > 0) {
+    bar.classList.add("is-visible");
+    countLabel.textContent = `${checked.length} Question${checked.length === 1 ? "" : "s"} Selected`;
+  } else {
+    bar.classList.remove("is-visible");
+  }
+  const selectAll = $("#qbSelectAll");
+  const allBoxes = $all(".qb-select", tbody);
+  if (allBoxes.length) {
+    selectAll.checked = checked.length === allBoxes.length;
+    selectAll.indeterminate = checked.length > 0 && checked.length < allBoxes.length;
+  }
+}
+
+async function deleteQuestion(qId) {
+  await deleteDoc(doc(db, "tests", currentTestId, "questions", qId));
+  questionCache[currentTestId] = (questionCache[currentTestId] || []).filter((q) => q.id !== qId);
+  toast("Question deleted.", "success");
+  applySearchAndRender();
 }
 
 function openQuestionEditModal(q) {
   const backdrop = $("#questionModalBackdrop");
   const form = $("#questionModalForm");
-  form.dataset.testId = q.testId;
   form.dataset.qId = q.id;
   form.question.value = q.question;
   form.optionA.value = q.optionA;
@@ -223,25 +258,23 @@ function openQuestionEditModal(q) {
 async function saveQuestionEdit(e) {
   e.preventDefault();
   const form = e.target;
-  const { testId, qId } = form.dataset;
-  await updateDoc(doc(db, "tests", testId, "questions", qId), {
+  const qId = form.dataset.qId;
+  const updated = {
     question: form.question.value.trim(),
     optionA: form.optionA.value.trim(),
     optionB: form.optionB.value.trim(),
     optionC: form.optionC.value.trim(),
     optionD: form.optionD.value.trim(),
     answer: form.answer.value.trim().toUpperCase(),
-  });
+  };
+  await updateDoc(doc(db, "tests", currentTestId, "questions", qId), updated);
+
+  // Keep the cache in sync so a later View click doesn't need a re-read.
+  const list = questionCache[currentTestId] || [];
+  const idx = list.findIndex((q) => q.id === qId);
+  if (idx !== -1) list[idx] = { id: qId, ...updated };
+
   toast("Question updated.", "success");
   $("#questionModalBackdrop").classList.remove("is-open");
-  loadQuestionBank();
-}
-
-async function refreshQuestionCounts(testIds) {
-  await Promise.all(
-    [...new Set(testIds)].map(async (testId) => {
-      const snap = await getDocs(collection(db, "tests", testId, "questions"));
-      await updateDoc(doc(db, "tests", testId), { questionCount: snap.size });
-    })
-  );
+  applySearchAndRender();
 }

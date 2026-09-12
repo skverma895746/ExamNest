@@ -55,7 +55,7 @@ img, svg, video, canvas {
 @media (max-width: 480px) {
   .admin-header {
     flex-direction: column;
-    align-items:space-between;
+    align-items: flex-start;
   }
   .panel__head {
     flex-direction: column;
@@ -112,6 +112,16 @@ img, svg, video, canvas {
   }
   .data-table td.qb-select-cell::before {
     content: none;
+  }
+  /* Question Bank now shows full question + option text per cell — that's
+     too long for the right-aligned single-line pattern above, so let these
+     specific columns stack their label above a left-aligned, wrapped value. */
+  .data-table td[data-label="Question"],
+  .data-table td[data-label^="Option"] {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    gap: 4px;
   }
 }
 
