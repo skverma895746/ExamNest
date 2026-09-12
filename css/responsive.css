@@ -55,7 +55,7 @@ img, svg, video, canvas {
 @media (max-width: 480px) {
   .admin-header {
     flex-direction: column;
-    align-items: flex-start;
+    align-items:space-between;
   }
   .panel__head {
     flex-direction: column;
