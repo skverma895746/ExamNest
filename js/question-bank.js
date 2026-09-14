@@ -64,7 +64,9 @@ function wireControls() {
     debounce(() => {
       const term = searchInput.value.trim().toLowerCase();
       const all = questionCache[currentTestId] || [];
-      visibleQuestions = term ? all.filter((q) => q.question.toLowerCase().includes(term)) : all;
+      visibleQuestions = term
+        ? all.filter((q) => String(q.question_en ?? q.question ?? "").toLowerCase().includes(term))
+        : all;
       renderTable(visibleQuestions);
     }, 200)
   );
@@ -168,7 +170,9 @@ async function handleView(testId) {
 function applySearchAndRender() {
   const term = $("#qbSearch").value.trim().toLowerCase();
   const all = questionCache[currentTestId] || [];
-  visibleQuestions = term ? all.filter((q) => q.question.toLowerCase().includes(term)) : all;
+  visibleQuestions = term
+    ? all.filter((q) => String(q.question_en ?? q.question ?? "").toLowerCase().includes(term))
+    : all;
   renderTable(visibleQuestions);
 }
 
@@ -192,11 +196,11 @@ function renderTable(list) {
       <tr data-q-id="${q.id}">
         <td class="qb-select-cell"><input type="checkbox" class="qb-select" /></td>
         <td data-label="#">${i + 1}</td>
-        <td data-label="Question">${escapeHtml(q.question)}</td>
-        <td data-label="Option A" class="${q.answer === "A" ? "qb-correct-option" : ""}">${escapeHtml(q.optionA)}</td>
-        <td data-label="Option B" class="${q.answer === "B" ? "qb-correct-option" : ""}">${escapeHtml(q.optionB)}</td>
-        <td data-label="Option C" class="${q.answer === "C" ? "qb-correct-option" : ""}">${escapeHtml(q.optionC)}</td>
-        <td data-label="Option D" class="${q.answer === "D" ? "qb-correct-option" : ""}">${escapeHtml(q.optionD)}</td>
+        <td data-label="Question">${bilingualCell(q.question_en ?? q.question, q.question_hi ?? q.questionHindi)}</td>
+        <td data-label="Option A" class="${q.answer === "A" ? "qb-correct-option" : ""}">${bilingualCell(q.optionA_en ?? q.optionA, q.optionA_hi ?? q.optionAHindi)}</td>
+        <td data-label="Option B" class="${q.answer === "B" ? "qb-correct-option" : ""}">${bilingualCell(q.optionB_en ?? q.optionB, q.optionB_hi ?? q.optionBHindi)}</td>
+        <td data-label="Option C" class="${q.answer === "C" ? "qb-correct-option" : ""}">${bilingualCell(q.optionC_en ?? q.optionC, q.optionC_hi ?? q.optionCHindi)}</td>
+        <td data-label="Option D" class="${q.answer === "D" ? "qb-correct-option" : ""}">${bilingualCell(q.optionD_en ?? q.optionD, q.optionD_hi ?? q.optionDHindi)}</td>
         <td data-label="Answer"><span class="qb-answer-pill">${q.answer}</span></td>
         <td data-label="Actions" class="row-actions">
           <button class="icon-btn" data-action="edit-q">Edit</button>
@@ -207,6 +211,15 @@ function renderTable(list) {
     .join("");
   setSelectAllState(false, false);
   updateBulkBar();
+}
+
+/** English text, with its Hindi translation stacked below when present.
+ *  Never truncates — long content wraps via the .qb-bilingual CSS instead. */
+function bilingualCell(english, hindi) {
+  return `<span class="qb-bilingual">
+    <span class="qb-bilingual__en">${escapeHtml(english)}</span>
+    ${hindi ? `<span class="qb-bilingual__hi">${escapeHtml(hindi)}</span>` : ""}
+  </span>`;
 }
 
 function setSelectAllState(checked, disabled) {
@@ -246,11 +259,16 @@ function openQuestionEditModal(q) {
   const backdrop = $("#questionModalBackdrop");
   const form = $("#questionModalForm");
   form.dataset.qId = q.id;
-  form.question.value = q.question;
-  form.optionA.value = q.optionA;
-  form.optionB.value = q.optionB;
-  form.optionC.value = q.optionC;
-  form.optionD.value = q.optionD;
+  form.question.value = q.question_en ?? q.question ?? "";
+  form.questionHindi.value = q.question_hi ?? q.questionHindi ?? "";
+  form.optionA.value = q.optionA_en ?? q.optionA ?? "";
+  form.optionAHindi.value = q.optionA_hi ?? q.optionAHindi ?? "";
+  form.optionB.value = q.optionB_en ?? q.optionB ?? "";
+  form.optionBHindi.value = q.optionB_hi ?? q.optionBHindi ?? "";
+  form.optionC.value = q.optionC_en ?? q.optionC ?? "";
+  form.optionCHindi.value = q.optionC_hi ?? q.optionCHindi ?? "";
+  form.optionD.value = q.optionD_en ?? q.optionD ?? "";
+  form.optionDHindi.value = q.optionD_hi ?? q.optionDHindi ?? "";
   form.answer.value = q.answer;
   backdrop.classList.add("is-open");
 }
@@ -259,14 +277,38 @@ async function saveQuestionEdit(e) {
   e.preventDefault();
   const form = e.target;
   const qId = form.dataset.qId;
+
   const updated = {
-    question: form.question.value.trim(),
-    optionA: form.optionA.value.trim(),
-    optionB: form.optionB.value.trim(),
-    optionC: form.optionC.value.trim(),
-    optionD: form.optionD.value.trim(),
+    question_en: form.question.value.trim(),
+    question_hi: form.questionHindi.value.trim(),
+    optionA_en: form.optionA.value.trim(),
+    optionA_hi: form.optionAHindi.value.trim(),
+    optionB_en: form.optionB.value.trim(),
+    optionB_hi: form.optionBHindi.value.trim(),
+    optionC_en: form.optionC.value.trim(),
+    optionC_hi: form.optionCHindi.value.trim(),
+    optionD_en: form.optionD.value.trim(),
+    optionD_hi: form.optionDHindi.value.trim(),
     answer: form.answer.value.trim().toUpperCase(),
   };
+
+  // Both languages are mandatory for every field — the HTML inputs aren't
+  // marked required (Hindi used to be optional), so this is enforced here.
+  if (
+    !updated.question_en || !updated.question_hi ||
+    !updated.optionA_en || !updated.optionA_hi ||
+    !updated.optionB_en || !updated.optionB_hi ||
+    !updated.optionC_en || !updated.optionC_hi ||
+    !updated.optionD_en || !updated.optionD_hi
+  ) {
+    toast("English and Hindi are both required for the question and every option.", "warning");
+    return;
+  }
+  if (!["A", "B", "C", "D"].includes(updated.answer)) {
+    toast("Answer must be A, B, C or D.", "warning");
+    return;
+  }
+
   await updateDoc(doc(db, "tests", currentTestId, "questions", qId), updated);
 
   // Keep the cache in sync so a later View click doesn't need a re-read.

@@ -34,10 +34,8 @@ let currentIndex = 0;
 let secondsRemaining = 0;
 let timerHandle = null;
 let startedAt = null;
-let isSubmitting = false;
 let tabSwitchCount = 0;
 let fullscreenExitCount = 0;
-let beforeUnloadHandler = null;
 
 export async function initExam() {
   testId = qs("testId");
@@ -49,8 +47,7 @@ export async function initExam() {
   // The exam can only be opened by way of the instructions page — this
   // sessionStorage flag is set there right before navigating here.
   const acknowledged = sessionStorage.getItem("examnest_instructions_ack_" + testId);
-  const savedSession = loadExamSession(testId);
-  if (!acknowledged && !savedSession) {
+  if (!acknowledged) {
     window.location.replace(`instructions.html?testId=${encodeURIComponent(testId)}`);
     return;
   }
@@ -75,13 +72,18 @@ export async function initExam() {
 
     questions = rawQuestions.map((q) => {
       let opts = [
-        { key: "A", text: q.optionA },
-        { key: "B", text: q.optionB },
-        { key: "C", text: q.optionC },
-        { key: "D", text: q.optionD },
+        { key: "A", text: q.optionA_en ?? q.optionA, textHindi: q.optionA_hi ?? q.optionAHindi ?? "" },
+        { key: "B", text: q.optionB_en ?? q.optionB, textHindi: q.optionB_hi ?? q.optionBHindi ?? "" },
+        { key: "C", text: q.optionC_en ?? q.optionC, textHindi: q.optionC_hi ?? q.optionCHindi ?? "" },
+        { key: "D", text: q.optionD_en ?? q.optionD, textHindi: q.optionD_hi ?? q.optionDHindi ?? "" },
       ];
       if (test.shuffleOptions) opts = shuffle(opts);
-      return { ...q, _options: opts };
+      return {
+        ...q,
+        question: q.question_en ?? q.question,
+        questionHindi: q.question_hi ?? q.questionHindi ?? "",
+        _options: opts,
+      };
     });
 
     resumeOrStartSession();
@@ -93,11 +95,9 @@ export async function initExam() {
 }
 
 /**
- * Fullscreen must be requested from a real user gesture, and that gesture
- * can't carry over from the instructions.html navigation — so exam.html
- * shows one short "Begin" screen whose click both requests fullscreen and
- * starts the timer. Skips straight to the exam if this is a resumed session
- * (the timer is already running server-side-equivalent, in localStorage).
+ * exam.html shows one short "Begin" screen whose click starts the timer.
+ * Skips straight to the exam if this is a resumed session (the timer is
+ * already running server-side-equivalent, in localStorage).
  */
 function renderBeginGate() {
   const root = $("#examRoot");
@@ -106,7 +106,7 @@ function renderBeginGate() {
       <div class="instructions-card" style="max-width:460px;text-align:center;">
         <h1 style="margin-bottom:10px;">${escapeHtml(test.title)}</h1>
         <p style="color:var(--navy-60);margin-bottom:24px;">
-          Click below when you are ready. The timer starts immediately.
+          Click below when you're ready to begin. The timer will start immediately.
         </p>
         <button class="btn btn--primary btn--block" id="beginExamBtn">Begin Exam</button>
       </div>
@@ -118,7 +118,7 @@ function renderBeginGate() {
     renderQuestion();
     startTimer();
     wireGlobalActions();
-    wireExamVisibilityWarning();
+    wireExamSecurity();
   });
 }
 
@@ -127,9 +127,7 @@ function resumeOrStartSession() {
   if (saved && saved.questionIds?.length === questions.length) {
     answers = saved.answers || {};
     statuses = saved.statuses || {};
-    const savedRemaining = saved.secondsRemaining ?? (test.duration || 60) * 60;
-    const elapsedSinceSave = saved.savedAt ? Math.floor((Date.now() - saved.savedAt) / 1000) : 0;
-    secondsRemaining = Math.max(0, savedRemaining - elapsedSinceSave);
+    secondsRemaining = saved.secondsRemaining ?? test.duration * 60;
     startedAt = saved.startedAt || Date.now();
   } else {
     answers = {};
@@ -148,7 +146,6 @@ function persistSession() {
     statuses,
     secondsRemaining,
     startedAt,
-    savedAt: Date.now(),
   });
 }
 
@@ -168,11 +165,10 @@ function renderShell() {
   root.innerHTML = `
     <div class="exam-topbar">
       <div class="exam-topbar__title">${escapeHtml(test.title)}<span id="progressLabel"></span></div>
-      <div class="exam-topbar__controls">
+      <div style="display:flex;align-items:center;gap:10px;">
         <button class="btn btn--ghost btn--sm palette-sheet-toggle" id="openPaletteBtn">Palette</button>
+        <button class="btn btn--danger btn--sm header-submit-btn" id="submitBtnHeader">Submit</button>
         <div class="exam-timer" id="examTimer">⏱ --:--</div>
-        <button class="btn btn--ghost btn--sm" id="leaveExamBtn">Cancel</button>
-        <button class="btn btn--danger btn--sm" id="submitTopBtn">Submit</button>
       </div>
     </div>
     <div class="exam-shell">
@@ -195,6 +191,7 @@ function renderShell() {
           <span><span class="dot" style="background:#8b5cf6"></span>Marked for Review</span>
           <span><span class="dot" style="background:linear-gradient(135deg,#10B981 50%,#8b5cf6 50%)"></span>Answered &amp; Review</span>
         </div>
+        <button class="btn btn--primary exam-submit-btn" id="submitBtn">Submit Test</button>
       </aside>
     </div>
 
@@ -202,6 +199,7 @@ function renderShell() {
       <button class="btn btn--ghost btn--sm" id="prevBtnMobile">Prev</button>
       <button class="btn btn--soft btn--sm" id="markReviewBtnMobile">Review</button>
       <button class="btn btn--primary btn--sm" id="saveNextBtnMobile" style="flex:1">Save &amp; Next</button>
+      
     </div>
 
     <div class="palette-sheet-backdrop" id="paletteSheetBackdrop"></div>
@@ -211,16 +209,28 @@ function renderShell() {
       <div class="palette-grid" id="paletteGridMobile"></div>
     </div>
 
+    <div class="modal-backdrop" id="submitModalBackdrop">
+      <div class="modal">
+        <h2>Submit Test?</h2>
+        <p style="color:var(--navy-60);font-size:0.9rem;">Once submitted, you won't be able to change your answers.</p>
+        <div class="confirm-summary" id="confirmSummary"></div>
+        <div class="modal-actions">
+          <button class="btn btn--ghost" id="submitCancelBtn">Cancel</button>
+          <button class="btn btn--danger" id="submitFinalBtn">Final Submit</button>
+        </div>
+      </div>
+    </div>
+
     <div class="exam-warning-banner" id="examWarningBanner"></div>
   `;
 }
 
 /**
- * Fullscreen exit (ESC, swipe-away, etc.) and tab/app switching are both
- * flagged with a non-blocking warning banner. Exam state is untouched either
- * way — everything is already auto-saved — so we warn rather than punish.
+ * Tab/app switching is flagged with a non-blocking warning banner. Exam
+ * state is untouched either way — everything is already auto-saved — so we
+ * warn rather than punish.
  */
-function wireExamVisibilityWarning() {
+function wireExamSecurity() {
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
       tabSwitchCount++;
@@ -276,12 +286,16 @@ function renderQuestion() {
   const card = $("#questionCard");
   card.innerHTML = `
     <div class="exam-question-card__q">${currentIndex + 1}. ${escapeHtml(q.question)}</div>
+    ${q.questionHindi ? `<div class="exam-question-card__q-hindi">${currentIndex + 1}. ${escapeHtml(q.questionHindi)}</div>` : ""}
     ${q._options
       .map(
         (opt) => `
       <label class="exam-option ${answers[q.id] === opt.key ? "is-selected" : ""}" data-key="${opt.key}">
         <input type="radio" name="option" value="${opt.key}" ${answers[q.id] === opt.key ? "checked" : ""} />
-        <span>${escapeHtml(opt.text)}</span>
+        <span class="exam-option__text">
+          <span class="exam-option__text-en">${escapeHtml(opt.text)}</span>
+          ${opt.textHindi ? `<span class="exam-option__text-hi">${escapeHtml(opt.textHindi)}</span>` : ""}
+        </span>
       </label>`
       )
       .join("")}
@@ -329,30 +343,14 @@ function wireGlobalActions() {
   $("#markReviewBtn").addEventListener("click", onMarkReview);
   $("#markReviewBtnMobile").addEventListener("click", onMarkReview);
 
-  $("#leaveExamBtn").addEventListener("click", leaveExam);
-  $("#submitTopBtn").addEventListener("click", openSubmitModal);
+  $("#submitBtn").addEventListener("click", openSubmitModal);
+ 
+  $("#submitBtnHeader").addEventListener("click", openSubmitModal);
+  $("#submitCancelBtn").addEventListener("click", closeSubmitModal);
+  $("#submitFinalBtn").addEventListener("click", finalSubmit);
 
   $("#openPaletteBtn").addEventListener("click", openPaletteSheet);
   $("#paletteSheetBackdrop").addEventListener("click", closePaletteSheet);
-
-  beforeUnloadHandler = (e) => {
-    if (isSubmitting) return;
-    e.preventDefault();
-    e.returnValue = "";
-  };
-  window.addEventListener("beforeunload", beforeUnloadHandler);
-}
-
-function leaveExam() {
-  persistSession();
-  removeBeforeUnloadPrompt();
-  window.location.href = "get-test.html";
-}
-
-function removeBeforeUnloadPrompt() {
-  if (!beforeUnloadHandler) return;
-  window.removeEventListener("beforeunload", beforeUnloadHandler);
-  beforeUnloadHandler = null;
 }
 
 function openPaletteSheet() {
@@ -369,19 +367,19 @@ function openSubmitModal() {
   const reviewCount = questions.filter((q) =>
     [STATUS.REVIEW, STATUS.ANSWERED_REVIEW].includes(statuses[q.id])
   ).length;
-  const ok = window.confirm(
-    `Final submit this test?\n\nAnswered: ${answeredCount}\nUnattempted: ${questions.length - answeredCount}\nMarked: ${reviewCount}\n\nAfter submit, answers cannot be changed.`
-  );
-  if (ok) finalSubmit(false);
+  $("#confirmSummary").innerHTML = `
+    <div><strong>${answeredCount}</strong><span>Answered</span></div>
+    <div><strong>${questions.length - answeredCount}</strong><span>Unattempted</span></div>
+    <div><strong>${reviewCount}</strong><span>Marked</span></div>
+  `;
+  $("#submitModalBackdrop").classList.add("is-open");
+}
+function closeSubmitModal() {
+  $("#submitModalBackdrop").classList.remove("is-open");
 }
 
 function startTimer() {
   updateTimerDisplay();
-  if (secondsRemaining <= 0) {
-    toast("Time's up! Submitting your test...", "warning");
-    finalSubmit(true);
-    return;
-  }
   timerHandle = setInterval(() => {
     secondsRemaining -= 1;
     if (secondsRemaining <= 0) {
@@ -405,16 +403,9 @@ function updateTimerDisplay() {
 }
 
 async function finalSubmit(auto = false) {
-  if (isSubmitting) return;
-  isSubmitting = true;
   clearInterval(timerHandle);
-  removeBeforeUnloadPrompt();
-
-  const topSubmitBtn = $("#submitTopBtn");
-  if (topSubmitBtn) {
-    topSubmitBtn.disabled = true;
-    topSubmitBtn.textContent = "Submitting...";
-  }
+  window.onbeforeunload = null;
+  closeSubmitModal();
 
   sessionStorage.removeItem("examnest_instructions_ack_" + testId);
 
@@ -437,6 +428,7 @@ async function finalSubmit(auto = false) {
     return {
       id: q.id,
       question: q.question,
+      questionHindi: q.questionHindi || "",
       options: q._options,
       yourAnswer: given || null,
       correctAnswer: q.answer,

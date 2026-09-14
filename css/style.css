@@ -180,7 +180,6 @@ p {
   -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid transparent;
   transition: border-color var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
-  padding:8px 0px;
 }
 
 .navbar.is-scrolled {
@@ -198,7 +197,7 @@ p {
 .brand {
   display: flex;
   align-items: center;
-  gap:5px;
+  gap: 10px;
   font-weight: 800;
   font-size: 1.2rem;
 }
@@ -1140,6 +1139,23 @@ p {
   }
   .hamburger {
     display: block;
+    padding: 10px;
+  }
+  .hamburger span {
+    width: 24px;
+    height: 2.5px;
+    margin: 6px 0;
+  }
+  .navbar .navbar__inner {
+    padding: 20px 18px;
+  }
+  .brand {
+    font-size: 1.25rem;
+  }
+  .brand__mark {
+    width: 40px;
+    height: 40px;
+    font-size: 1.05rem;
   }
   .about-grid,
   .feature-row,

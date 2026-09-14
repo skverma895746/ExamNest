@@ -17,8 +17,13 @@ export function initResult() {
   renderHero();
   renderCards();
   renderCharts();
-  renderReview();
+  hideReviewSection();
   wireActions();
+}
+
+function hideReviewSection() {
+  const section = document.getElementById("reviewSection");
+  if (section) section.classList.add("is-hidden");
 }
 
 function renderFatal() {
@@ -132,6 +137,9 @@ function wireActions() {
     window.location.href = `instructions.html?testId=${encodeURIComponent(result.testId)}&mode=retest`;
   });
   $("#reviewBtn").addEventListener("click", () => {
-    document.getElementById("reviewSection").scrollIntoView({ behavior: "smooth" });
+    const section = document.getElementById("reviewSection");
+    if (section) section.classList.remove("is-hidden");
+    renderReview();
+    section?.scrollIntoView({ behavior: "smooth" });
   });
 }
