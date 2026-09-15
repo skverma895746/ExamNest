@@ -258,14 +258,17 @@ async function duplicateTest(testId) {
 function openTestModal(testId) {
   const backdrop = $("#testModalBackdrop");
   const form = $("#testModalForm");
+
   form.reset();
   form.dataset.editingId = testId || "";
   $("#testModalTitle").textContent = testId ? "Edit Test" : "Create Test";
   $("#testModalHint").style.display = testId ? "none" : "block";
 
   if (testId) {
+    // Edit existing test
     getDoc(doc(db, "tests", testId)).then((snap) => {
       const t = snap.data();
+
       form.title.value = t.title || "";
       form.description.value = t.description || "";
       form.duration.value = t.duration || 60;
@@ -274,7 +277,21 @@ function openTestModal(testId) {
       form.shuffleQuestions.checked = !!t.shuffleQuestions;
       form.shuffleOptions.checked = !!t.shuffleOptions;
     });
+  } else {
+    // New Test → Load saved defaults
+    getDoc(doc(db, "settings", "global")).then((snap) => {
+      if (!snap.exists()) return;
+
+      const d = snap.data();
+
+      form.duration.value = d.defaultTimer ?? 60;
+      form.negativeMarking.value = d.defaultNegative ?? 0;
+      form.difficulty.value = d.defaultDifficulty ?? "medium";
+      form.shuffleQuestions.checked = !!d.defaultShuffleQuestions;
+      form.shuffleOptions.checked = !!d.defaultShuffleOptions;
+    }).catch(console.error);
   }
+
   backdrop.classList.add("is-open");
 }
 
