@@ -1,0 +1,29 @@
+User-agent: *
+
+# Public pages — allow crawling
+Allow: /$
+Allow: /index.html
+Allow: /get-test.html
+
+# Admin and private areas — never index
+Disallow: /login.html
+Disallow: /dashboard.html
+Disallow: /upload.html
+Disallow: /question-bank.html
+Disallow: /settings.html
+Disallow: /results-admin.html
+Disallow: /exam.html
+Disallow: /result.html
+Disallow: /instructions.html
+
+# Block admin-only query routes
+Disallow: /*?testId=
+Disallow: /*?attemptId=
+
+# Don't index config or source-control leftovers
+Disallow: /firestore.rules
+Disallow: /firebase.json
+Disallow: /.firebaserc
+Disallow: /README.md
+
+Sitemap: https://examnest.web.app/sitemap.xml

@@ -978,7 +978,17 @@ p {
   font-size: 1.15rem;
   margin-bottom: 18px;
 }
+#Contact-Us {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+    background: linear-gradient(135deg, var(--blue), var(--blue-dark));
+    color: #fff;
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.3);
+    border-radius: 25px;
 
+}
 .modal-actions {
   display: flex;
   justify-content: flex-end;
@@ -1153,7 +1163,7 @@ p {
     margin: 6px 0;
   }
   .navbar .navbar__inner {
-    padding: 20px 18px;
+    padding: 10px 18px;
   }
   .brand {
     font-size: 1.25rem;

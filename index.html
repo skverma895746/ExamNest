@@ -3,11 +3,92 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ExamNest — Practice Like the Real Exam</title>
-<meta name="description" content="ExamNest is a free CBT-style mock test platform. No signup required — pick a test and start practicing in seconds." />
+<title>ExamNest — Practice Like the Real Exam | Free Online Mock Test Platform</title>
+<meta name="description" content="ExamNest is a free CBT-style mock test platform. No signup required — pick a test and start practicing in seconds. Real exam interface, timer, question palette and instant result analysis." />
+<meta name="keywords" content="ExamNest, online mock test, CBT test platform, free mock test, computer based test, practice test online, exam preparation, question palette, negative marking, instant result analysis" />
+<meta name="author" content="ExamNest" />
+<meta name="robots" content="index, follow" />
+<meta name="googlebot" content="index, follow" />
+<meta name="language" content="English" />
+<meta name="theme-color" content="#2563EB" />
+<link rel="canonical" href="https://examnest.web.app/" />
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="ExamNest" />
+<meta property="og:url" content="https://examnest.web.app/" />
+<meta property="og:title" content="ExamNest — Practice Like the Real Exam" />
+<meta property="og:description" content="Free CBT-style mock tests with a real exam interface. No signup required — pick a test and start practicing in seconds." />
+<meta property="og:image" content="https://examnest.web.app/assets/icons/favicon.svg" />
+<meta property="og:locale" content="en_IN" />
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="ExamNest — Practice Like the Real Exam" />
+<meta name="twitter:description" content="Free CBT-style mock tests with a real exam interface. No signup required." />
+<meta name="twitter:image" content="https://examnest.web.app/assets/icons/favicon.svg" />
+
 <link rel="icon" href="assets/icons/favicon.svg" />
 <link rel="stylesheet" href="css/style.css" />
 <link rel="stylesheet" href="css/responsive.css" />
+
+<!-- Structured data for Google -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "ExamNest",
+  "alternateName": "ExamNest — Practice Like the Real Exam",
+  "url": "https://examnest.web.app/",
+  "description": "Free CBT-style mock test platform with a real exam interface, timer, question palette and instant result analysis. No signup required.",
+  "inLanguage": "en",
+  "publisher": {
+    "@type": "Organization",
+    "name": "ExamNest",
+    "url": "https://examnest.web.app/"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Do I need an account to take a test on ExamNest?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. Candidates can browse and take any published test without signing up. Only administrators need to log in."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Are the mock tests on ExamNest free?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes, every published test is free to attempt with no account and no payment required."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I retake a test on ExamNest?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Once you have attempted a test the button changes to Retest, and you can retake it as many times as you like."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does ExamNest apply negative marking?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Negative marking is applied only where the test creator has enabled it. The instructions page shows the marking scheme before the test begins."
+      }
+    }
+  ]
+}
+</script>
 </head>
 <body>
 
@@ -21,6 +102,7 @@
     </a>
     <nav class="navbar__links">
       <a href="get-test.html" class="btn btn--ghost">Get Test</a>
+      <a href="https://sndp-portfolio.netlify.app/portfolio.html#contact" class="btn btn--ghost" target="_blank" rel="noopener">Contact Us</a>
       <a href="login.html" class="btn btn--primary">Admin Login</a>
       <button class="hamburger" id="hamburgerBtn" aria-label="Open menu" aria-expanded="false">
         <span></span><span></span><span></span>
@@ -250,7 +332,10 @@
       <div class="cta-panel">
         <h2>Ready to practice like it's exam day?</h2>
         <p>Pick a test and start — no forms, no waiting.</p>
-        <a href="get-test.html" class="btn btn--primary">Browse Available Tests</a>
+        <div class="button-row" style="justify-content:center;gap:12px;flex-wrap:wrap;display:flex;">
+          <a href="get-test.html" class="btn btn--primary">Browse Available Tests</a>
+          <a href="https://sndp-portfolio.netlify.app/portfolio.html#contact" class="btn btn--ghost" target="_blank" rel="noopener">Contact Us</a>
+        </div>
       </div>
     </div>
   </section>
@@ -284,6 +369,7 @@
         <ul>
           <li><a href="index.html#about">About</a></li>
           <li><a href="index.html#faq">FAQ</a></li>
+          <li><a href="https://snd-portfolio.netlify.app/#contact" target="_blank" rel="noopener">Contact Us</a></li>
         </ul>
       </div>
     </div>
@@ -298,6 +384,7 @@
   import { initNavbar } from "./js/utils.js";
   initNavbar(`
     <a href="get-test.html" class="btn btn--ghost btn--block">Get Test</a>
+    <a href="https://snd-portfolio.netlify.app/#contact" class="btn btn--ghost btn--block" target="_blank" rel="noopener">Contact Us</a>
     <a href="login.html" class="btn btn--primary btn--block">Admin Login</a>
   `);
 </script>
