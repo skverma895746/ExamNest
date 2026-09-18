@@ -26,4 +26,4 @@ Disallow: /firebase.json
 Disallow: /.firebaserc
 Disallow: /README.md
 
-Sitemap: https://examnest.web.app/sitemap.xml
+Sitemap: https://https://examnests.netlify.app/sitemap.xml
