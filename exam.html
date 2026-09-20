@@ -21,6 +21,21 @@
 <script type="module">
   import { initExam } from "./js/exam.js";
   initExam();
+  document.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+});
+
+// F12 aur shortcuts band
+document.addEventListener("keydown", (e) => {
+    if (
+        e.key === "F12" ||
+        (e.ctrlKey && e.shiftKey && e.key === "I") ||
+        (e.ctrlKey && e.shiftKey && e.key === "J") ||
+        (e.ctrlKey && e.key === "U")
+    ) {
+        e.preventDefault();
+    }
+});
 </script>
 </body>
 </html>
