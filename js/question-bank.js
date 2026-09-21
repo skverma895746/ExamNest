@@ -12,6 +12,7 @@ import {
   deleteDoc,
   updateDoc,
   getDocs,
+  getCountFromServer,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { $, $all, escapeHtml, toast, debounce, confirmDialog } from "./utils.js";
 
@@ -115,6 +116,7 @@ function wireControls() {
       await deleteDoc(doc(db, "tests", currentTestId, "questions", qId));
     }
     questionCache[currentTestId] = (questionCache[currentTestId] || []).filter((q) => !ids.includes(q.id));
+    await syncQuestionCount(currentTestId);
     toast("Selected questions deleted.", "success");
     applySearchAndRender();
   });
@@ -251,8 +253,22 @@ function updateBulkBar() {
 async function deleteQuestion(qId) {
   await deleteDoc(doc(db, "tests", currentTestId, "questions", qId));
   questionCache[currentTestId] = (questionCache[currentTestId] || []).filter((q) => q.id !== qId);
+  await syncQuestionCount(currentTestId);
   toast("Question deleted.", "success");
   applySearchAndRender();
+}
+
+/** Best-effort — keeps the test doc's denormalized questionCount accurate
+ *  after a delete. If this fails, get-test.html's own live-count fallback
+ *  still covers it, so a failure here is never allowed to break the delete
+ *  the admin actually asked for. */
+async function syncQuestionCount(testId) {
+  try {
+    const countSnap = await getCountFromServer(collection(db, "tests", testId, "questions"));
+    await updateDoc(doc(db, "tests", testId), { questionCount: countSnap.data().count });
+  } catch (err) {
+    console.error("Couldn't update denormalized questionCount:", err);
+  }
 }
 
 function openQuestionEditModal(q) {

@@ -6,6 +6,8 @@ import {
   collection,
   addDoc,
   getDocs,
+  getCountFromServer,
+  updateDoc,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { $, $all, qs, escapeHtml, toast } from "./utils.js";
 
@@ -396,6 +398,17 @@ async function handleSave(e) {
     for (const q of validRows) {
       await addDoc(col, q);
     }
+
+    // Keep the denormalized count on the test doc accurate (works whether
+    // this test had 0 or 500 questions before this upload). Best-effort —
+    // if this fails, get-test.html's own fallback count still covers it.
+    try {
+      const countSnap = await getCountFromServer(col);
+      await updateDoc(doc(db, "tests", testId), { questionCount: countSnap.data().count });
+    } catch (countErr) {
+      console.error("Couldn't update denormalized questionCount:", countErr);
+    }
+
     setStep("save");
     const savedCount = validRows.length;
     toast(`${savedCount} question(s) saved to the test.`, "success");

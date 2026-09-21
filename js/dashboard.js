@@ -332,6 +332,7 @@ async function saveTestFromModal(e) {
       const newRef = await addDoc(collection(db, "tests"), {
         ...payload,
         status: "published",
+        questionCount: 0,
         createdAt: serverTimestamp(),
       });
       toast("Test created and published. Now add its questions...", "success");

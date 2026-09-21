@@ -88,23 +88,28 @@
     try {
       const q = query(collection(db, "tests"), where("status", "==", "published"));
       const snap = await getDocs(q);
-      allTests = [];
-      for (const docSnap of snap.docs) {
-        const data = docSnap.data();
-        let questionCount = data.questionCount;
-        if (questionCount === undefined) {
-          // Fallback: count subcollection if not denormalized on the test doc
-          try {
-            const countSnap = await getCountFromServer(
-              collection(db, "tests", docSnap.id, "questions")
-            );
-            questionCount = countSnap.data().count;
-          } catch {
-            questionCount = 0;
+
+      // Run every needed count lookup at once instead of one-by-one — this
+      // was the main reason the page felt slow with several published tests.
+      allTests = await Promise.all(
+        snap.docs.map(async (docSnap) => {
+          const data = docSnap.data();
+          let questionCount = data.questionCount;
+          if (questionCount === undefined) {
+            // Fallback: count subcollection if not denormalized on the test doc
+            try {
+              const countSnap = await getCountFromServer(
+                collection(db, "tests", docSnap.id, "questions")
+              );
+              questionCount = countSnap.data().count;
+            } catch {
+              questionCount = 0;
+            }
           }
-        }
-        allTests.push({ id: docSnap.id, ...data, questionCount });
-      }
+          return { id: docSnap.id, ...data, questionCount };
+        })
+      );
+
       render(allTests);
     } catch (err) {
       console.error(err);
