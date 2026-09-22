@@ -19,60 +19,22 @@ import { $, formatDate, toast, escapeHtml, confirmDialog } from "./utils.js";
 import { clearAttemptRecord } from "./storage.js";
 
 // -----------------------------------------------------------------------------
-// Shared admin shell: sidebar + mobile topbar. Every protected page calls
-// renderShell(activeKey) once guardAdminPage() resolves.
+// Shared admin shell: sidebar + mobile topbar. The markup now lives as
+// static HTML in every admin page (dashboard.html, upload.html,
+// question-bank.html, settings.html) — renderShell() just wires it up.
 // -----------------------------------------------------------------------------
-const NAV_ITEMS = [
-  { key: "dashboard", label: "Dashboard", icon: "▦", href: "dashboard.html" },
-  { key: "mocktests", label: "Mock Tests", icon: "📄", href: "dashboard.html#mocktests" },
-  { key: "upload", label: "Upload Questions", icon: "⬆", href: "upload.html" },
-  { key: "questionbank", label: "Question Bank", icon: "🗂", href: "question-bank.html" },
-  { key: "settings", label: "Settings", icon: "⚙", href: "settings.html" },
-];
 
 export function renderShell(activeKey) {
-  const shell = document.createElement("div");
-  shell.className = "admin-shell";
+  // Sidebar/topbar/scrim are now static HTML in every admin page (no more
+  // document.createElement/innerHTML build step) — this just wires up the
+  // exact same behavior as before: highlight the active link, confirm +
+  // run logout, and toggle the mobile drawer.
+  const sidebar = document.getElementById("sidebar");
+  const scrim = document.getElementById("sidebarScrim");
 
-  const sidebar = document.createElement("aside");
-  sidebar.className = "sidebar";
-  sidebar.id = "sidebar";
-  sidebar.innerHTML = `
-    <div class="sidebar__brand"><span class="brand__mark">EN</span>ExamNest</div>
-    <nav>
-      ${NAV_ITEMS.map(
-        (item) => `
-        <a class="sidebar__link ${item.key === activeKey ? "is-active" : ""}" href="${item.href}">
-          <span class="sidebar__icon">${item.icon}</span>${item.label}
-        </a>`
-      ).join("")}
-    </nav>
-    <button class="sidebar__link sidebar__link--logout" id="logoutBtn">
-      <span class="sidebar__icon">⏻</span>Logout
-    </button>
-  `;
-
-  const topbar = document.createElement("div");
-  topbar.className = "admin-topbar";
-  topbar.innerHTML = `
-    <button class="hamburger" id="sidebarToggle" aria-label="Open menu"><span></span><span></span><span></span></button>
-    <div class="brand" style="font-size:1rem"><span class="brand__mark">EN</span>ExamNest</div>
-    <span style="width:38px"></span>
-  `;
-
-  const scrim = document.createElement("div");
-  scrim.className = "sidebar-scrim";
-  scrim.id = "sidebarScrim";
-
-  const main = document.getElementById("adminMain");
-  shell.appendChild(sidebar);
-  const mainWrap = document.createElement("div");
-  mainWrap.appendChild(topbar);
-  mainWrap.appendChild(main);
-  shell.appendChild(mainWrap);
-
-  document.body.prepend(scrim);
-  document.body.prepend(shell);
+  sidebar.querySelectorAll(".sidebar__link[data-key]").forEach((link) => {
+    link.classList.toggle("is-active", link.dataset.key === activeKey);
+  });
 
   $("#logoutBtn").addEventListener("click", async () => {
     const ok = await confirmDialog({

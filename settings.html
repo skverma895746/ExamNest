@@ -14,6 +14,25 @@
 </head>
 <body>
 
+<div class="sidebar-scrim" id="sidebarScrim"></div>
+<div class="admin-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar__brand"><span class="brand__mark">EN</span>ExamNest</div>
+    <nav>
+      <a class="sidebar__link" data-key="dashboard" href="dashboard.html"><span class="sidebar__icon">▦</span>Dashboard</a>
+      <a class="sidebar__link" data-key="mocktests" href="dashboard.html#mocktests"><span class="sidebar__icon">📄</span>Mock Tests</a>
+      <a class="sidebar__link" data-key="upload" href="upload.html"><span class="sidebar__icon">⬆</span>Upload Questions</a>
+      <a class="sidebar__link" data-key="questionbank" href="question-bank.html"><span class="sidebar__icon">🗂</span>Question Bank</a>
+      <a class="sidebar__link" data-key="settings" href="settings.html"><span class="sidebar__icon">⚙</span>Settings</a>
+    </nav>
+    <button class="sidebar__link sidebar__link--logout" id="logoutBtn"><span class="sidebar__icon">⏻</span>Logout</button>
+  </aside>
+  <div>
+    <div class="admin-topbar">
+      <button class="hamburger" id="sidebarToggle" aria-label="Open menu"><span></span><span></span><span></span></button>
+      <div class="brand" style="font-size:1rem"><span class="brand__mark">EN</span>ExamNest</div>
+      <span style="width:38px"></span>
+    </div>
 <div id="adminMain" class="admin-main">
 
   <div class="admin-header">
@@ -101,6 +120,9 @@
   </div>
 
 </div>
+  </div>
+</div>
+
 
 <script type="module">
 
