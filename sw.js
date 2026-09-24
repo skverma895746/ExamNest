@@ -28,7 +28,6 @@ const PRECACHE_URLS = [
   "./css/dashboard.css",
   "./css/exam.css",
   "./css/result.css",
-  "./css/floating-contact.css",
   "./js/utils.js",
   "./js/firebase.js",
   "./js/auth.js",
