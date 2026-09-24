@@ -1,91 +1,109 @@
-// js/pwa.js
-// Registers the service worker so ExamNest is installable and works
-// offline for previously visited pages/assets. This file only adds
-// PWA capability — it does not change any existing page behavior,
-// and registration failures are silently logged, never surfaced to
-// the user.
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js").catch((err) => {
-      console.warn("Service worker registration failed:", err);
-    });
-  });
-}
+// sw.js — ExamNest service worker
+// Purpose: make the static app shell (HTML/CSS/JS/icons) installable
+// and available offline. It deliberately does NOT touch anything
+// that existing functionality depends on:
+//   - Only intercepts same-origin GET requests.
+//   - Firebase Auth / Firestore calls are cross-origin, so they are
+//     never matched here and always go straight to the network.
+//   - Any non-GET request (writes, uploads) is left completely alone.
+// Bump CACHE_VERSION any time a precached file's content changes.
 
-// ---------------- Custom "Install App" button ----------------
-// Modern Chrome no longer shows its own install popup automatically —
-// the site must capture the `beforeinstallprompt` event and offer its
-// own visible trigger. This injects a small floating button (bottom-
-// right) on any page that loads pwa.js, and only shows it once Chrome
-// confirms the site is actually installable.
+const CACHE_VERSION = "examnest-shell-v2";
 
-let deferredInstallPrompt = null;
+const PRECACHE_URLS = [
+  "./",
+  "./index.html",
+  "./get-test.html",
+  "./instructions.html",
+  "./exam.html",
+  "./result.html",
+  "./login.html",
+  "./dashboard.html",
+  "./upload.html",
+  "./question-bank.html",
+  "./settings.html",
+  "./manifest.json",
+  "./css/style.css",
+  "./css/responsive.css",
+  "./css/dashboard.css",
+  "./css/exam.css",
+  "./css/result.css",
+  "./js/utils.js",
+  "./js/firebase.js",
+  "./js/auth.js",
+  "./js/storage.js",
+  "./js/dashboard.js",
+  "./js/exam.js",
+  "./js/result.js",
+  "./js/upload.js",
+  "./js/question-bank.js",
+  "./js/pwa.js",
+  "./assets/icons/favicon.svg",
+  "./assets/icons/icon-192.png",
+  "./assets/icons/icon-512.png",
+  "./assets/icons/icon-maskable-512.png",
+  "./assets/icons/apple-touch-icon.png",
+];
 
-function createInstallButton() {
-  const btn = document.createElement("button");
-  btn.id = "pwaInstallBtn";
-  btn.type = "button";
-  btn.textContent = "⬇ Install App";
-  btn.style.cssText = `
-    position: fixed;
-    right: 18px;
-    bottom: 18px;
-    z-index: 9999;
-    padding: 12px 20px;
-    background: linear-gradient(135deg, #2563EB, #1D4ED8);
-    color: #fff;
-    border: none;
-    border-radius: 999px;
-    font-family: inherit;
-    font-weight: 600;
-    font-size: 14px;
-    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.35);
-    cursor: pointer;
-    display: none;
-    align-items: center;
-    gap: 8px;
-    transition: transform 200ms ease, box-shadow 200ms ease;
-  `;
-  btn.addEventListener("mouseenter", () => (btn.style.transform = "translateY(-2px)"));
-  btn.addEventListener("mouseleave", () => (btn.style.transform = "translateY(0)"));
-
-  btn.addEventListener("click", async () => {
-    if (!deferredInstallPrompt) return;
-    btn.disabled = true;
-    deferredInstallPrompt.prompt();
-    const { outcome } = await deferredInstallPrompt.userChoice;
-    console.log("Install prompt outcome:", outcome);
-    deferredInstallPrompt = null;
-    btn.style.display = "none";
-    btn.disabled = false;
-  });
-
-  document.body.appendChild(btn);
-  return btn;
-}
-
-window.addEventListener("beforeinstallprompt", (event) => {
-  // Prevent the (now largely unused) default mini-infobar and store
-  // the event so our own button can trigger it on demand.
-  event.preventDefault();
-  deferredInstallPrompt = event;
-
-  const show = () => {
-    const btn = document.getElementById("pwaInstallBtn") || createInstallButton();
-    btn.style.display = "flex";
-  };
-
-  if (document.body) {
-    show();
-  } else {
-    document.addEventListener("DOMContentLoaded", show);
-  }
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches
+      .open(CACHE_VERSION)
+      .then((cache) => cache.addAll(PRECACHE_URLS))
+      .catch((err) => console.warn("SW precache skipped some files:", err))
+  );
+  self.skipWaiting();
 });
 
-// Hide the button (if visible) once the app has actually been installed.
-window.addEventListener("appinstalled", () => {
-  deferredInstallPrompt = null;
-  const btn = document.getElementById("pwaInstallBtn");
-  if (btn) btn.style.display = "none";
-  console.log("ExamNest was installed.");
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches
+      .keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE_VERSION).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener("fetch", (event) => {
+  const req = event.request;
+
+  // Leave every non-GET request, and every cross-origin request
+  // (Firebase Auth, Firestore, any external API), completely
+  // untouched — pass straight through with no interception.
+  if (req.method !== "GET" || new URL(req.url).origin !== self.location.origin) {
+    return;
+  }
+
+  if (req.mode === "navigate") {
+    // HTML page loads: network-first, so logged-in users always see
+    // fresh content when online; falls back to the cached shell (or
+    // cached index.html) only when offline.
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE_VERSION).then((cache) => cache.put(req, copy));
+          return res;
+        })
+        .catch(() => caches.match(req).then((cached) => cached || caches.match("./index.html")))
+    );
+    return;
+  }
+
+  // Static assets (css/js/icons/manifest): cache-first for speed,
+  // refreshed in the background whenever the network is available.
+  event.respondWith(
+    caches.match(req).then((cached) => {
+      const network = fetch(req)
+        .then((res) => {
+          if (res && res.status === 200) {
+            const copy = res.clone();
+            caches.open(CACHE_VERSION).then((cache) => cache.put(req, copy));
+          }
+          return res;
+        })
+        .catch(() => cached);
+      return cached || network;
+    })
+  );
 });
