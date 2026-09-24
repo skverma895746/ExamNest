@@ -36,100 +36,133 @@
   // CREATE INSTALL BUTTON
   // --------------------------------------------------
 
-  function createInstallButton() {
-    if (document.getElementById("pwaInstallBtn")) {
-      return document.getElementById("pwaInstallBtn");
-    }
+function createInstallButton() {
+  if (document.getElementById("pwaInstallWrap")) {
+    return document.getElementById("pwaInstallWrap");
+  }
 
-    const btn = document.createElement("button");
+  // Wrapper
+  const wrap = document.createElement("div");
 
-    btn.id = "pwaInstallBtn";
-    btn.type = "button";
-    btn.innerHTML = "⬇️ Install App";
+  wrap.id = "pwaInstallWrap";
 
-    btn.style.cssText = `
-      position: fixed;
-      right: 18px;
-      bottom: 18px;
-      z-index: 999999;
+  wrap.style.cssText = `
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    z-index: 999999;
 
-      padding: 12px 20px;
+    display: none;
+    align-items: center;
+    gap: 8px;
+  `;
 
-      background: linear-gradient(
-        135deg,
-        #2563EB,
-        #1D4ED8
+  // Install button
+  const btn = document.createElement("button");
+
+  btn.id = "pwaInstallBtn";
+  btn.type = "button";
+  btn.innerHTML = "⬇ Install App";
+
+  btn.style.cssText = `
+    padding: 12px 20px;
+
+    background: linear-gradient(
+      135deg,
+      #2563EB,
+      #1D4ED8
+    );
+
+    color: white;
+    border: none;
+    border-radius: 999px;
+
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+
+    box-shadow:
+      0 8px 25px rgba(37, 99, 235, 0.35);
+
+    cursor: pointer;
+
+    white-space: nowrap;
+  `;
+
+  // Close button
+  const closeBtn = document.createElement("button");
+
+  closeBtn.id = "pwaInstallCloseBtn";
+  closeBtn.type = "button";
+  closeBtn.innerHTML = "✕";
+  closeBtn.title = "Close";
+
+  closeBtn.style.cssText = `
+    width: 34px;
+    height: 34px;
+
+    border: none;
+    border-radius: 50%;
+
+    background: #ffffff;
+    color: #475569;
+
+    font-size: 16px;
+    font-weight: 600;
+
+    box-shadow:
+      0 5px 18px rgba(0, 0, 0, 0.15);
+
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  `;
+
+  // Install
+  btn.addEventListener("click", async () => {
+    if (!deferredInstallPrompt) return;
+
+    btn.disabled = true;
+
+    try {
+      deferredInstallPrompt.prompt();
+
+      const result =
+        await deferredInstallPrompt.userChoice;
+
+      console.log(
+        "Install prompt result:",
+        result.outcome
       );
 
-      color: white;
-      border: none;
-      border-radius: 999px;
+      deferredInstallPrompt = null;
 
-      font-family: Arial, sans-serif;
-      font-size: 14px;
-      font-weight: 600;
+      wrap.style.display = "none";
 
-      box-shadow:
-        0 8px 25px rgba(37, 99, 235, 0.35);
+    } catch (error) {
+      console.error(
+        "Install prompt failed:",
+        error
+      );
+    }
 
-      cursor: pointer;
+    btn.disabled = false;
+  });
 
-      display: none;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
+  // Close
+  closeBtn.addEventListener("click", () => {
+    wrap.style.display = "none";
+  });
 
-      transition: all 0.2s ease;
-    `;
+  wrap.appendChild(btn);
+  wrap.appendChild(closeBtn);
 
-    btn.addEventListener("mouseenter", () => {
-      btn.style.transform = "translateY(-2px)";
-      btn.style.boxShadow =
-        "0 12px 30px rgba(37, 99, 235, 0.45)";
-    });
+  document.body.appendChild(wrap);
 
-    btn.addEventListener("mouseleave", () => {
-      btn.style.transform = "translateY(0)";
-      btn.style.boxShadow =
-        "0 8px 25px rgba(37, 99, 235, 0.35)";
-    });
-
-    btn.addEventListener("click", async () => {
-      if (!deferredInstallPrompt) {
-        console.log("Install prompt is not available yet.");
-        return;
-      }
-
-      btn.disabled = true;
-
-      try {
-        deferredInstallPrompt.prompt();
-
-        const result =
-          await deferredInstallPrompt.userChoice;
-
-        console.log(
-          "Install prompt result:",
-          result.outcome
-        );
-
-        deferredInstallPrompt = null;
-
-        btn.style.display = "none";
-      } catch (error) {
-        console.error(
-          "Install prompt failed:",
-          error
-        );
-      }
-
-      btn.disabled = false;
-    });
-
-    document.body.appendChild(btn);
-
-    return btn;
-  }
+  return wrap;
+}
 
   // --------------------------------------------------
   // BEFORE INSTALL PROMPT
