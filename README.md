@@ -136,3 +136,17 @@ deploy. The `ignore` array should not contain `robots.txt` or `sitemap.xml`.
 6. Use **URL Inspection → Request Indexing** on your homepage to speed things up.
 
 Indexing usually takes a few days to a couple of weeks.
+
+## PWA (Installable App)
+
+ExamNest can be installed as an app on desktop and mobile, and works offline for pages you have already visited.
+
+Files added for this:
+- `manifest.json` — app name, icons, theme color, start page.
+- `sw.js` — service worker; caches the static shell (HTML/CSS/JS/icons) so it loads instantly and works offline. It never touches Firebase Auth/Firestore requests or any non-GET request, so login, uploads, and live exam data are unaffected.
+- `js/pwa.js` — the only script needed on each page; registers the service worker.
+- `assets/icons/icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png` — generated from the existing `favicon.svg`.
+
+**Testing:** open the site over HTTPS (or `localhost`) — service workers do not run on plain `http://`. In Chrome DevTools → Application → Manifest/Service Workers, confirm both are registered. An install icon should appear in the browser's address bar.
+
+**Updating cached files:** if you change any file listed in `PRECACHE_URLS` inside `sw.js`, bump `CACHE_VERSION` at the top of that file so returning visitors get the new version instead of a stale cached copy.
