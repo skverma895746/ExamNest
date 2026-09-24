@@ -11,39 +11,39 @@
 const CACHE_VERSION = "examnest-shell-v1";
 
 const PRECACHE_URLS = [
-  "/",
-  "/index.html",
-  "/get-test.html",
-  "/instructions.html",
-  "/exam.html",
-  "/result.html",
-  "/login.html",
-  "/dashboard.html",
-  "/upload.html",
-  "/question-bank.html",
-  "/settings.html",
-  "/manifest.json",
-  "/css/style.css",
-  "/css/responsive.css",
-  "/css/dashboard.css",
-  "/css/exam.css",
-  "/css/result.css",
-  "/css/floating-contact.css",
-  "/js/utils.js",
-  "/js/firebase.js",
-  "/js/auth.js",
-  "/js/storage.js",
-  "/js/dashboard.js",
-  "/js/exam.js",
-  "/js/result.js",
-  "/js/upload.js",
-  "/js/question-bank.js",
-  "/js/pwa.js",
-  "/assets/icons/favicon.svg",
-  "/assets/icons/icon-192.png",
-  "/assets/icons/icon-512.png",
-  "/assets/icons/icon-maskable-512.png",
-  "/assets/icons/apple-touch-icon.png",
+  "./",
+  "./index.html",
+  "./get-test.html",
+  "./instructions.html",
+  "./exam.html",
+  "./result.html",
+  "./login.html",
+  "./dashboard.html",
+  "./upload.html",
+  "./question-bank.html",
+  "./settings.html",
+  "./manifest.json",
+  "./css/style.css",
+  "./css/responsive.css",
+  "./css/dashboard.css",
+  "./css/exam.css",
+  "./css/result.css",
+  "./css/floating-contact.css",
+  "./js/utils.js",
+  "./js/firebase.js",
+  "./js/auth.js",
+  "./js/storage.js",
+  "./js/dashboard.js",
+  "./js/exam.js",
+  "./js/result.js",
+  "./js/upload.js",
+  "./js/question-bank.js",
+  "./js/pwa.js",
+  "./assets/icons/favicon.svg",
+  "./assets/icons/icon-192.png",
+  "./assets/icons/icon-512.png",
+  "./assets/icons/icon-maskable-512.png",
+  "./assets/icons/apple-touch-icon.png",
 ];
 
 self.addEventListener("install", (event) => {
@@ -86,7 +86,7 @@ self.addEventListener("fetch", (event) => {
           caches.open(CACHE_VERSION).then((cache) => cache.put(req, copy));
           return res;
         })
-        .catch(() => caches.match(req).then((cached) => cached || caches.match("/index.html")))
+        .catch(() => caches.match(req).then((cached) => cached || caches.match("./index.html")))
     );
     return;
   }
