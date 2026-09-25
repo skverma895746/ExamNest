@@ -14,6 +14,14 @@ export function initResult() {
     return;
   }
 
+  // -------- NEW: Recalculate score using Marks Per Question --------
+  const marksPerQuestion = Number(result.marksPerQuestion) || 1;
+  const negativeMarking = Number(result.negativeMarking) || 0;
+
+  result.maxScore = (result.perQuestion?.length || result.maxScore || 0) * marksPerQuestion;
+  result.score = Math.round((result.correct * marksPerQuestion - result.wrong * negativeMarking) * 100) / 100;
+  // ---------------------------------------------------------------
+
   renderHero();
   renderCards();
   renderCharts();
@@ -39,9 +47,13 @@ function renderFatal() {
 
 function renderHero() {
   $("#resultTestTitle").textContent = result.testTitle;
+
+  const marksPerQuestion = Number(result.marksPerQuestion) || 1;
+  const negativeMarking = Number(result.negativeMarking) || 0;
+
   $("#resultSubline").textContent = result.autoSubmitted
-    ? "Time ran out — your test was submitted automatically."
-    : "Here's how you did.";
+    ? `Time ran out — your test was submitted automatically. (${marksPerQuestion} mark/question, -${negativeMarking} wrong)`
+    : `Each correct answer = ${marksPerQuestion} mark, Wrong = -${negativeMarking}.`;
 }
 
 function renderCards() {
@@ -54,19 +66,21 @@ function renderCards() {
 }
 
 function renderCharts() {
-  // Accuracy pie (pure CSS conic-gradient, no library needed)
+  // Accuracy pie
   const acc = result.accuracy;
   const pie = $("#accuracyPie");
   pie.style.background = `conic-gradient(var(--success) ${acc}%, var(--error) ${acc}% 100%)`;
   $("#accuracyPieLabel").textContent = `${acc.toFixed(1)}%`;
 
-  // Performance bar chart: correct / wrong / unattempted
+  // Performance bar chart
   const max = Math.max(result.correct, result.wrong, result.unattempted, 1);
+
   const bars = [
     { label: "Correct", value: result.correct, color: "var(--success)" },
     { label: "Wrong", value: result.wrong, color: "var(--error)" },
     { label: "Unattempted", value: result.unattempted, color: "var(--warning)" },
   ];
+
   $("#performanceChart").innerHTML = bars
     .map(
       (b) => `
@@ -79,13 +93,17 @@ function renderCharts() {
 
   // Time distribution
   const pct = Math.min(100, (result.timeUsed / result.duration) * 100);
+
   $("#timeBarFill").style.width = `${pct}%`;
   $("#timeUsedLabel").textContent = formatDuration(result.timeUsed);
   $("#timeTotalLabel").textContent = formatDuration(result.duration);
 }
 
 function renderReview() {
-  const list = result.perQuestion.filter((q) => currentFilter === "all" || q.status === currentFilter);
+  const list = result.perQuestion.filter(
+    (q) => currentFilter === "all" || q.status === currentFilter
+  );
+
   const container = $("#reviewList");
 
   if (!list.length) {
@@ -94,30 +112,56 @@ function renderReview() {
   }
 
   container.innerHTML = list
-    .map((q, i) => {
+    .map((q) => {
       const badgeClass =
-        q.status === "correct" ? "review-badge--correct" : q.status === "wrong" ? "review-badge--wrong" : "review-badge--unattempted";
-      const badgeLabel = q.status === "correct" ? "Correct" : q.status === "wrong" ? "Wrong" : "Unattempted";
+        q.status === "correct"
+          ? "review-badge--correct"
+          : q.status === "wrong"
+          ? "review-badge--wrong"
+          : "review-badge--unattempted";
+
+      const badgeLabel =
+        q.status === "correct"
+          ? "Correct"
+          : q.status === "wrong"
+          ? "Wrong"
+          : "Unattempted";
+
       return `
       <div class="review-item">
+
         <div class="review-item__head">
           <div class="review-item__q">${escapeHtml(q.question)}</div>
           <span class="review-badge ${badgeClass}">${badgeLabel}</span>
         </div>
+
         ${q.options
           .map((opt) => {
             let cls = "";
-            if (opt.key === q.correctAnswer) cls = "is-correct-answer";
-            else if (opt.key === q.yourAnswer && q.yourAnswer !== q.correctAnswer) cls = "is-your-wrong-answer";
+
+            if (opt.key === q.correctAnswer) {
+              cls = "is-correct-answer";
+            } else if (
+              opt.key === q.yourAnswer &&
+              q.yourAnswer !== q.correctAnswer
+            ) {
+              cls = "is-your-wrong-answer";
+            }
+
             const tag =
               opt.key === q.correctAnswer
                 ? " — Correct answer"
                 : opt.key === q.yourAnswer
                 ? " — Your answer"
                 : "";
-            return `<div class="review-option ${cls}">${opt.key}. ${escapeHtml(opt.text)}${tag}</div>`;
+
+            return `
+              <div class="review-option ${cls}">
+                ${opt.key}. ${escapeHtml(opt.text)}${tag}
+              </div>`;
           })
           .join("")}
+
       </div>`;
     })
     .join("");
@@ -127,8 +171,13 @@ function wireActions() {
   $all(".review-filter").forEach((btn) =>
     btn.addEventListener("click", () => {
       currentFilter = btn.dataset.filter;
-      $all(".review-filter").forEach((b) => b.classList.remove("is-active"));
+
+      $all(".review-filter").forEach((b) =>
+        b.classList.remove("is-active")
+      );
+
       btn.classList.add("is-active");
+
       renderReview();
     })
   );
@@ -136,10 +185,14 @@ function wireActions() {
   $("#retakeBtn").addEventListener("click", () => {
     window.location.href = `instructions.html?testId=${encodeURIComponent(result.testId)}&mode=retest`;
   });
+
   $("#reviewBtn").addEventListener("click", () => {
     const section = document.getElementById("reviewSection");
+
     if (section) section.classList.remove("is-hidden");
+
     renderReview();
+
     section?.scrollIntoView({ behavior: "smooth" });
   });
 }

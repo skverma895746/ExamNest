@@ -8,7 +8,17 @@ import {
   addDoc,
   serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { $, $all, qs, shuffle, escapeHtml, formatDuration, toast } from "./utils.js";
+
+import {
+  $,
+  $all,
+  qs,
+  shuffle,
+  escapeHtml,
+  formatDuration,
+  toast,
+} from "./utils.js";
+
 import {
   saveExamSession,
   loadExamSession,
@@ -27,88 +37,220 @@ const STATUS = {
 
 let test = null;
 let testId = null;
-let questions = []; // shuffled, each: { id, question, optionA..D, answer, _options:[{key,text}] }
-let answers = {}; // questionId -> "A"|"B"|"C"|"D"
-let statuses = {}; // questionId -> STATUS
+
+let questions = [];
+// shuffled, each:
+// { id, question, optionA..D, answer, _options:[{key,text}] }
+
+let answers = {};
+// questionId -> "A"|"B"|"C"|"D"
+
+let statuses = {};
+// questionId -> STATUS
+
 let currentIndex = 0;
 let secondsRemaining = 0;
 let timerHandle = null;
 let startedAt = null;
+
 let tabSwitchCount = 0;
 let fullscreenExitCount = 0;
 
+
+/* =========================================================
+   INIT EXAM
+   ========================================================= */
+
 export async function initExam() {
   testId = qs("testId");
+
   if (!testId) {
     renderFatal("No test was specified. Please go back and pick a test.");
     return;
   }
 
-  // The exam can only be opened by way of the instructions page — this
-  // sessionStorage flag is set there right before navigating here.
-  const acknowledged = sessionStorage.getItem("examnest_instructions_ack_" + testId);
+  // The exam can only be opened by way of the instructions page.
+  const acknowledged =
+    sessionStorage.getItem(
+      "examnest_instructions_ack_" + testId
+    );
+
   if (!acknowledged) {
-    window.location.replace(`instructions.html?testId=${encodeURIComponent(testId)}`);
+    window.location.replace(
+      `instructions.html?testId=${encodeURIComponent(testId)}`
+    );
     return;
   }
 
   try {
-    const testSnap = await getDoc(doc(db, "tests", testId));
-    if (!testSnap.exists() || testSnap.data().status !== "published") {
-      renderFatal("This test could not be found. It may have been removed or unpublished.");
+    /* -------------------------------------------------------
+       Load test
+       ------------------------------------------------------- */
+
+    const testSnap = await getDoc(
+      doc(db, "tests", testId)
+    );
+
+    if (
+      !testSnap.exists() ||
+      testSnap.data().status !== "published"
+    ) {
+      renderFatal(
+        "This test could not be found. It may have been removed or unpublished."
+      );
       return;
     }
-    test = { id: testId, ...testSnap.data() };
 
-    const qSnap = await getDocs(collection(db, "tests", testId, "questions"));
-    let rawQuestions = qSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    test = {
+      id: testId,
+      ...testSnap.data(),
+    };
+
+
+    /* -------------------------------------------------------
+       Load questions
+       ------------------------------------------------------- */
+
+    const qSnap = await getDocs(
+      collection(db, "tests", testId, "questions")
+    );
+
+    let rawQuestions = qSnap.docs.map((d) => ({
+      id: d.id,
+      ...d.data(),
+    }));
 
     if (!rawQuestions.length) {
-      renderFatal("This test doesn't have any questions yet.");
+      renderFatal(
+        "This test doesn't have any questions yet."
+      );
       return;
     }
 
-    if (test.shuffleQuestions) rawQuestions = shuffle(rawQuestions);
+
+    /* -------------------------------------------------------
+       Shuffle questions
+       ------------------------------------------------------- */
+
+    if (test.shuffleQuestions) {
+      rawQuestions = shuffle(rawQuestions);
+    }
+
+
+    /* -------------------------------------------------------
+       Prepare questions
+       ------------------------------------------------------- */
 
     questions = rawQuestions.map((q) => {
+
       let opts = [
-        { key: "A", text: q.optionA_en ?? q.optionA, textHindi: q.optionA_hi ?? q.optionAHindi ?? "" },
-        { key: "B", text: q.optionB_en ?? q.optionB, textHindi: q.optionB_hi ?? q.optionBHindi ?? "" },
-        { key: "C", text: q.optionC_en ?? q.optionC, textHindi: q.optionC_hi ?? q.optionCHindi ?? "" },
-        { key: "D", text: q.optionD_en ?? q.optionD, textHindi: q.optionD_hi ?? q.optionDHindi ?? "" },
+        {
+          key: "A",
+          text: q.optionA_en ?? q.optionA,
+          textHindi:
+            q.optionA_hi ??
+            q.optionAHindi ??
+            "",
+        },
+
+        {
+          key: "B",
+          text: q.optionB_en ?? q.optionB,
+          textHindi:
+            q.optionB_hi ??
+            q.optionBHindi ??
+            "",
+        },
+
+        {
+          key: "C",
+          text: q.optionC_en ?? q.optionC,
+          textHindi:
+            q.optionC_hi ??
+            q.optionCHindi ??
+            "",
+        },
+
+        {
+          key: "D",
+          text: q.optionD_en ?? q.optionD,
+          textHindi:
+            q.optionD_hi ??
+            q.optionDHindi ??
+            "",
+        },
       ];
-      if (test.shuffleOptions) opts = shuffle(opts);
+
+      if (test.shuffleOptions) {
+        opts = shuffle(opts);
+      }
+
       return {
         ...q,
-        question: q.question_en ?? q.question,
-        questionHindi: q.question_hi ?? q.questionHindi ?? "",
+
+        question:
+          q.question_en ??
+          q.question,
+
+        questionHindi:
+          q.question_hi ??
+          q.questionHindi ??
+          "",
+
         _options: opts,
       };
     });
 
+
+    /* -------------------------------------------------------
+       Resume / start session
+       ------------------------------------------------------- */
+
     resumeOrStartSession();
+
     renderBeginGate();
+
   } catch (err) {
+
     console.error(err);
-    renderFatal("Something went wrong loading this test. Please try again.");
+
+    renderFatal(
+      "Something went wrong loading this test. Please try again."
+    );
   }
 }
 
-/**
- * exam.html shows one short "Begin" screen whose click starts the timer.
- * Skips straight to the exam if this is a resumed session (the timer is
- * already running server-side-equivalent, in localStorage).
- */
+
+/* =========================================================
+   BEGIN GATE
+   ========================================================= */
+
 function renderBeginGate() {
+
   const root = $("#examRoot");
-  const answeredCount = Object.keys(answers).length;
+
+  const answeredCount =
+    Object.keys(answers).length;
 
   root.innerHTML = `
     <div class="begin-gate">
-      <div class="instructions-card" style="max-width:460px;text-align:center;">
-        <div class="begin-gate__icon">${isResumedSession ? "↻" : "📝"}</div>
-        <h1 style="margin-bottom:6px;">${escapeHtml(test.title)}</h1>
-        <p style="color:var(--navy-60);margin-bottom:4px;">
+
+      <div
+        class="instructions-card"
+        style="max-width:460px;text-align:center;"
+      >
+
+        <div class="begin-gate__icon">
+          ${isResumedSession ? "↻" : "📝"}
+        </div>
+
+        <h1 style="margin-bottom:6px;">
+          ${escapeHtml(test.title)}
+        </h1>
+
+        <p
+          style="color:var(--navy-60);margin-bottom:4px;"
+        >
           ${
             isResumedSession
               ? `Welcome back — you have an exam in progress with <strong>${answeredCount} of ${questions.length}</strong> questions answered. Your timer continues from where you left off.`
@@ -117,427 +259,1442 @@ function renderBeginGate() {
         </p>
 
         <ul class="begin-gate__list">
-          <li>${questions.length} questions · ${test.duration ?? 0} minutes total</li>
-          <li>Stay on this tab — switching away is tracked and may be flagged</li>
-          <li>Your progress auto-saves, so an accidental refresh won't lose your work</li>
+
+          <li>
+            ${questions.length} questions ·
+            ${test.duration ?? 0} minutes total
+          </li>
+
+          <li>
+            Stay on this tab — switching away is tracked
+            and may be flagged
+          </li>
+
+          <li>
+            Your progress auto-saves, so an accidental
+            refresh won't lose your work
+          </li>
+
         </ul>
 
-        <button class="btn btn--primary btn--block" id="beginExamBtn">${isResumedSession ? "Resume Exam" : "Begin Exam"}</button>
-      </div>
-    </div>`;
+        <button
+          class="btn btn--primary btn--block"
+          id="beginExamBtn"
+        >
+          ${
+            isResumedSession
+              ? "Resume Exam"
+              : "Begin Exam"
+          }
+        </button>
 
-  $("#beginExamBtn").addEventListener("click", () => {
-    renderShell();
-    renderPalette();
-    renderQuestion();
-    startTimer();
-    wireGlobalActions();
-    wireExamSecurity();
-  });
+      </div>
+
+    </div>
+  `;
+
+  $("#beginExamBtn").addEventListener(
+    "click",
+    () => {
+
+      renderShell();
+      renderPalette();
+      renderQuestion();
+      startTimer();
+      wireGlobalActions();
+      wireExamSecurity();
+
+    }
+  );
 }
+
+
+/* =========================================================
+   SESSION
+   ========================================================= */
 
 let isResumedSession = false;
 
 function resumeOrStartSession() {
+
   const saved = loadExamSession(testId);
-  if (saved && saved.questionIds?.length === questions.length) {
+
+  if (
+    saved &&
+    saved.questionIds?.length === questions.length
+  ) {
+
     answers = saved.answers || {};
     statuses = saved.statuses || {};
-    secondsRemaining = saved.secondsRemaining ?? test.duration * 60;
-    startedAt = saved.startedAt || Date.now();
+
+    secondsRemaining =
+      saved.secondsRemaining ??
+      (test.duration || 60) * 60;
+
+    startedAt =
+      saved.startedAt ||
+      Date.now();
+
     isResumedSession = true;
+
   } else {
+
     answers = {};
     statuses = {};
-    questions.forEach((q) => (statuses[q.id] = STATUS.NOT_VISITED));
-    secondsRemaining = (test.duration || 60) * 60;
+
+    questions.forEach(
+      (q) => {
+        statuses[q.id] =
+          STATUS.NOT_VISITED;
+      }
+    );
+
+    secondsRemaining =
+      (test.duration || 60) * 60;
+
     startedAt = Date.now();
+
+    isResumedSession = false;
+
     persistSession();
   }
 }
 
 function persistSession() {
+
   saveExamSession(testId, {
-    questionIds: questions.map((q) => q.id),
+
+    questionIds:
+      questions.map((q) => q.id),
+
     answers,
+
     statuses,
+
     secondsRemaining,
+
     startedAt,
+
   });
 }
 
+
+/* =========================================================
+   FATAL
+   ========================================================= */
+
 function renderFatal(message) {
+
   document.body.innerHTML = `
-    <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;font-family:'Poppins',sans-serif;">
+    <div
+      style="
+        min-height:100vh;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding:24px;
+        text-align:center;
+        font-family:'Poppins',sans-serif;
+      "
+    >
+
       <div>
-        <h1 style="margin-bottom:10px;">Can't start this test</h1>
-        <p style="color:#64748b;margin-bottom:20px;">${escapeHtml(message)}</p>
-        <a href="get-test.html" style="display:inline-block;padding:12px 24px;background:#2563EB;color:#fff;border-radius:999px;text-decoration:none;font-weight:600;">Back to tests</a>
+
+        <h1 style="margin-bottom:10px;">
+          Can't start this test
+        </h1>
+
+        <p
+          style="
+            color:#64748b;
+            margin-bottom:20px;
+          "
+        >
+          ${escapeHtml(message)}
+        </p>
+
+        <a
+          href="get-test.html"
+          style="
+            display:inline-block;
+            padding:12px 24px;
+            background:#2563EB;
+            color:#fff;
+            border-radius:999px;
+            text-decoration:none;
+            font-weight:600;
+          "
+        >
+          Back to tests
+        </a>
+
       </div>
-    </div>`;
-}
 
-function renderShell() {
-  const root = $("#examRoot");
-  root.innerHTML = `
-    <div class="exam-topbar">
-      <div class="exam-topbar__brand">
-        <span class="exam-topbar__logo">EN</span>
-        <div class="exam-topbar__titles">
-          <div class="exam-topbar__title">${escapeHtml(test.title)}</div>
-          <div class="exam-topbar__subtitle" id="progressLabel"></div>
-        </div>
-      </div>
-      <div class="exam-topbar__controls">
-        <button class="btn btn--ghost btn--sm palette-sheet-toggle" id="openPaletteBtn">Palette</button>
-        <button class="btn btn--danger btn--sm header-submit-btn" id="submitBtnHeader">Submit</button>
-        <div class="exam-timer" id="examTimer">
-          <span class="exam-timer__ring" id="examTimerRing"><span class="exam-timer__ring-icon">⏱</span></span>
-          <span class="exam-timer__info">
-            <span class="exam-timer__value" id="examTimerValue">--:--</span>
-            <span class="exam-timer__label">Time Remaining</span>
-          </span>
-        </div>
-      </div>
     </div>
-    <div class="exam-header-progress"><div class="exam-header-progress__fill" id="examHeaderProgressFill"></div></div>
-
-    <div class="exam-shell">
-      <div class="exam-question-area">
-        <div class="exam-progress" id="examProgress"></div>
-        <div class="exam-question-card" id="questionCard"></div>
-        <div class="exam-actions">
-          <button class="btn btn--ghost" id="prevBtn">← Previous</button>
-          <button class="btn btn--outline" id="clearAnswerBtn">Clear Answer</button>
-          <button class="btn btn--soft" id="markReviewBtn">Mark for Review</button>
-          <button class="btn btn--primary" id="saveNextBtn">Save &amp; Next</button>
-        </div>
-      </div>
-      <aside class="exam-palette" id="examPalette">
-        <h3>Question Palette</h3>
-        <div class="palette-legend">
-          <span><span class="dot" style="background:#10B981"></span>Answered</span>
-          <span><span class="dot" style="background:#fff;border:2px solid #94a3b8"></span>Not Answered</span>
-          <span><span class="dot" style="background:#F59E0B"></span>Marked for Review</span>
-          <span><span class="dot" style="background:#fff;border:1px solid #cbd5e1"></span>Not Visited</span>
-        </div>
-        <div class="palette-grid" id="paletteGrid"></div>
-        <button class="btn btn--primary exam-submit-btn" id="submitBtn">Submit Test</button>
-      </aside>
-    </div>
-
-    <div class="exam-bottom-nav">
-      <button class="btn btn--ghost btn--sm" id="prevBtnMobile">Prev</button>
-      <button class="btn btn--outline btn--sm" id="clearAnswerBtnMobile">Clear</button>
-      <button class="btn btn--soft btn--sm" id="markReviewBtnMobile">Review</button>
-      <button class="btn btn--primary btn--sm" id="saveNextBtnMobile" style="flex:1">Save &amp; Next</button>
-    </div>
-
-    <div class="palette-sheet-backdrop" id="paletteSheetBackdrop"></div>
-    <div class="palette-sheet" id="paletteSheet">
-      <div class="palette-sheet__handle"></div>
-      <h3 style="margin-bottom:14px;">Question Palette</h3>
-      <div class="palette-grid" id="paletteGridMobile"></div>
-    </div>
-
-    <div class="modal-backdrop" id="submitModalBackdrop">
-      <div class="modal">
-        <h2>Submit Test?</h2>
-        <p style="color:var(--navy-60);font-size:0.9rem;">Once submitted, you won't be able to change your answers.</p>
-        <div class="confirm-summary" id="confirmSummary"></div>
-        <div class="modal-actions">
-          <button class="btn btn--ghost" id="submitCancelBtn">Cancel</button>
-          <button class="btn btn--danger" id="submitFinalBtn">Final Submit</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="exam-warning-banner" id="examWarningBanner"></div>
   `;
 }
 
-/**
- * Tab/app switching is flagged with a non-blocking warning banner. Exam
- * state is untouched either way — everything is already auto-saved — so we
- * warn rather than punish.
- */
+
+/* =========================================================
+   EXAM SHELL
+   ========================================================= */
+
+function renderShell() {
+
+  const root = $("#examRoot");
+
+  root.innerHTML = `
+
+    <div class="exam-topbar">
+
+      <div class="exam-topbar__brand">
+
+        <span class="exam-topbar__logo">
+          EN
+        </span>
+
+        <div class="exam-topbar__titles">
+
+          <div class="exam-topbar__title">
+            ${escapeHtml(test.title)}
+          </div>
+
+          <div
+            class="exam-topbar__subtitle"
+            id="progressLabel"
+          ></div>
+
+        </div>
+
+      </div>
+
+
+      <div class="exam-topbar__controls">
+
+        <button
+          class="btn btn--ghost btn--sm palette-sheet-toggle"
+          id="openPaletteBtn"
+        >
+          Palette
+        </button>
+
+        <button
+          class="btn btn--danger btn--sm header-submit-btn"
+          id="submitBtnHeader"
+        >
+          Submit
+        </button>
+
+        <div
+          class="exam-timer"
+          id="examTimer"
+        >
+
+          <span
+            class="exam-timer__ring"
+            id="examTimerRing"
+          >
+            <span class="exam-timer__ring-icon">
+              ⏱
+            </span>
+          </span>
+
+          <span class="exam-timer__info">
+
+            <span
+              class="exam-timer__value"
+              id="examTimerValue"
+            >
+              --:--
+            </span>
+
+            <span class="exam-timer__label">
+              Time Remaining
+            </span>
+
+          </span>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="exam-header-progress">
+      <div
+        class="exam-header-progress__fill"
+        id="examHeaderProgressFill"
+      ></div>
+    </div>
+
+
+    <div class="exam-shell">
+
+      <div class="exam-question-area">
+
+        <div
+          class="exam-progress"
+          id="examProgress"
+        ></div>
+
+        <div
+          class="exam-question-card"
+          id="questionCard"
+        ></div>
+
+        <div class="exam-actions">
+
+          <button
+            class="btn btn--ghost"
+            id="prevBtn"
+          >
+            ← Previous
+          </button>
+
+          <button
+            class="btn btn--outline"
+            id="clearAnswerBtn"
+          >
+            Clear Answer
+          </button>
+
+          <button
+            class="btn btn--soft"
+            id="markReviewBtn"
+          >
+            Mark for Review
+          </button>
+
+          <button
+            class="btn btn--primary"
+            id="saveNextBtn"
+          >
+            Save &amp; Next
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <aside
+        class="exam-palette"
+        id="examPalette"
+      >
+
+        <h3>
+          Question Palette
+        </h3>
+
+        <div class="palette-legend">
+
+          <span>
+            <span
+              class="dot"
+              style="background:#10B981"
+            ></span>
+            Answered
+          </span>
+
+          <span>
+            <span
+              class="dot"
+              style="background:#fff;border:2px solid #94a3b8"
+            ></span>
+            Not Answered
+          </span>
+
+          <span>
+            <span
+              class="dot"
+              style="background:#F59E0B"
+            ></span>
+            Marked for Review
+          </span>
+
+          <span>
+            <span
+              class="dot"
+              style="background:#fff;border:1px solid #cbd5e1"
+            ></span>
+            Not Visited
+          </span>
+
+        </div>
+
+        <div
+          class="palette-grid"
+          id="paletteGrid"
+        ></div>
+
+        <button
+          class="btn btn--primary exam-submit-btn"
+          id="submitBtn"
+        >
+          Submit Test
+        </button>
+
+      </aside>
+
+    </div>
+
+
+    <div class="exam-bottom-nav">
+
+      <button
+        class="btn btn--ghost btn--sm"
+        id="prevBtnMobile"
+      >
+        Prev
+      </button>
+
+      <button
+        class="btn btn--outline btn--sm"
+        id="clearAnswerBtnMobile"
+      >
+        Clear
+      </button>
+
+      <button
+        class="btn btn--soft btn--sm"
+        id="markReviewBtnMobile"
+      >
+        Review
+      </button>
+
+      <button
+        class="btn btn--primary btn--sm"
+        id="saveNextBtnMobile"
+        style="flex:1"
+      >
+        Save &amp; Next
+      </button>
+
+    </div>
+
+
+    <div
+      class="palette-sheet-backdrop"
+      id="paletteSheetBackdrop"
+    ></div>
+
+    <div
+      class="palette-sheet"
+      id="paletteSheet"
+    >
+
+      <div class="palette-sheet__handle"></div>
+
+      <h3 style="margin-bottom:14px;">
+        Question Palette
+      </h3>
+
+      <div
+        class="palette-grid"
+        id="paletteGridMobile"
+      ></div>
+
+    </div>
+
+
+    <div
+      class="modal-backdrop"
+      id="submitModalBackdrop"
+    >
+
+      <div class="modal">
+
+        <h2>
+          Submit Test?
+        </h2>
+
+        <p
+          style="
+            color:var(--navy-60);
+            font-size:0.9rem;
+          "
+        >
+          Once submitted, you won't be able to
+          change your answers.
+        </p>
+
+        <div
+          class="confirm-summary"
+          id="confirmSummary"
+        ></div>
+
+        <div class="modal-actions">
+
+          <button
+            class="btn btn--ghost"
+            id="submitCancelBtn"
+          >
+            Cancel
+          </button>
+
+          <button
+            class="btn btn--danger"
+            id="submitFinalBtn"
+          >
+            Final Submit
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div
+      class="exam-warning-banner"
+      id="examWarningBanner"
+    ></div>
+
+  `;
+}
+
+
+/* =========================================================
+   EXAM SECURITY
+   ========================================================= */
+
 function wireExamSecurity() {
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) {
-      tabSwitchCount++;
-      showWarningBanner("⚠ Tab switch detected. Your progress is saved, but repeated switching may be flagged.");
-      persistSession();
+
+  document.addEventListener(
+    "visibilitychange",
+    () => {
+
+      if (document.hidden) {
+
+        tabSwitchCount++;
+
+        showWarningBanner(
+          "⚠ Tab switch detected. Your progress is saved, but repeated switching may be flagged."
+        );
+
+        persistSession();
+      }
+
     }
-  });
-}
-
-let warningBannerTimeout = null;
-function showWarningBanner(message) {
-  const banner = $("#examWarningBanner");
-  if (!banner) return;
-  banner.textContent = message;
-  banner.classList.add("is-visible");
-  clearTimeout(warningBannerTimeout);
-  warningBannerTimeout = setTimeout(() => banner.classList.remove("is-visible"), 4500);
-}
-
-function computeStatus(qId) {
-  const answered = answers[qId] !== undefined;
-  const st = statuses[qId] || STATUS.NOT_VISITED;
-  if (st === STATUS.REVIEW || st === STATUS.ANSWERED_REVIEW) {
-    return answered ? STATUS.ANSWERED_REVIEW : STATUS.REVIEW;
-  }
-  return answered ? STATUS.ANSWERED : st;
-}
-
-function renderPalette() {
-  const html = questions
-    .map((q, i) => {
-      const status = computeStatus(q.id);
-      return `<button class="palette-cell status-${status} ${i === currentIndex ? "is-current" : ""}" data-index="${i}">${i + 1}</button>`;
-    })
-    .join("");
-  $("#paletteGrid").innerHTML = html;
-  $("#paletteGridMobile").innerHTML = html;
-  $("#progressLabel").textContent = `Question ${currentIndex + 1} of ${questions.length}`;
-  $("#examProgress").textContent = `Question ${currentIndex + 1} of ${questions.length}`;
-
-  // Purely visual — fills the thin progress bar under the header to
-  // show how far through the test the candidate is.
-  const headerFill = $("#examHeaderProgressFill");
-  if (headerFill) headerFill.style.width = `${((currentIndex + 1) / questions.length) * 100}%`;
-
-  $all(".palette-cell").forEach((cell) =>
-    cell.addEventListener("click", () => {
-      goToQuestion(Number(cell.dataset.index));
-      closePaletteSheet();
-    })
   );
 }
 
-function renderQuestion() {
-  const q = questions[currentIndex];
-  if (statuses[q.id] === STATUS.NOT_VISITED) statuses[q.id] = STATUS.VISITED;
+let warningBannerTimeout = null;
 
-  const card = $("#questionCard");
+function showWarningBanner(message) {
+
+  const banner =
+    $("#examWarningBanner");
+
+  if (!banner) return;
+
+  banner.textContent = message;
+
+  banner.classList.add("is-visible");
+
+  clearTimeout(
+    warningBannerTimeout
+  );
+
+  warningBannerTimeout =
+    setTimeout(
+      () =>
+        banner.classList.remove(
+          "is-visible"
+        ),
+      4500
+    );
+}
+
+
+/* =========================================================
+   STATUS
+   ========================================================= */
+
+function computeStatus(qId) {
+
+  const answered =
+    answers[qId] !== undefined;
+
+  const st =
+    statuses[qId] ||
+    STATUS.NOT_VISITED;
+
+  if (
+    st === STATUS.REVIEW ||
+    st === STATUS.ANSWERED_REVIEW
+  ) {
+
+    return answered
+      ? STATUS.ANSWERED_REVIEW
+      : STATUS.REVIEW;
+  }
+
+  return answered
+    ? STATUS.ANSWERED
+    : st;
+}
+
+
+/* =========================================================
+   PALETTE
+   ========================================================= */
+
+function renderPalette() {
+
+  const html = questions
+    .map((q, i) => {
+
+      const status =
+        computeStatus(q.id);
+
+      return `
+        <button
+          class="palette-cell status-${status}
+          ${i === currentIndex ? "is-current" : ""}"
+          data-index="${i}"
+        >
+          ${i + 1}
+        </button>
+      `;
+
+    })
+    .join("");
+
+  $("#paletteGrid").innerHTML = html;
+
+  $("#paletteGridMobile").innerHTML =
+    html;
+
+  $("#progressLabel").textContent =
+    `Question ${currentIndex + 1} of ${questions.length}`;
+
+  $("#examProgress").textContent =
+    `Question ${currentIndex + 1} of ${questions.length}`;
+
+
+  // Visual progress bar only.
+
+  const headerFill =
+    $("#examHeaderProgressFill");
+
+  if (headerFill) {
+
+    headerFill.style.width =
+      `${((currentIndex + 1) / questions.length) * 100}%`;
+  }
+
+
+  $all(".palette-cell").forEach(
+    (cell) => {
+
+      cell.addEventListener(
+        "click",
+        () => {
+
+          goToQuestion(
+            Number(cell.dataset.index)
+          );
+
+          closePaletteSheet();
+
+        }
+      );
+
+    }
+  );
+}
+
+
+/* =========================================================
+   QUESTION
+   ========================================================= */
+
+function renderQuestion() {
+
+  const q =
+    questions[currentIndex];
+
+  if (
+    statuses[q.id] ===
+    STATUS.NOT_VISITED
+  ) {
+
+    statuses[q.id] =
+      STATUS.VISITED;
+  }
+
+  const card =
+    $("#questionCard");
+
   card.innerHTML = `
-    <div class="exam-question-card__badge">Multiple Choice Question ${currentIndex + 1}</div>
-    <div class="exam-question-card__q">${currentIndex + 1}. ${escapeHtml(q.question)}</div>
-    ${q.questionHindi ? `<div class="exam-question-card__q-hindi">${currentIndex + 1}. ${escapeHtml(q.questionHindi)}</div>` : ""}
+
+    <div class="exam-question-card__badge">
+      Multiple Choice Question ${currentIndex + 1}
+    </div>
+
+    <div class="exam-question-card__q">
+      ${currentIndex + 1}.
+      ${escapeHtml(q.question)}
+    </div>
+
+    ${
+      q.questionHindi
+        ? `
+          <div class="exam-question-card__q-hindi">
+            ${currentIndex + 1}.
+            ${escapeHtml(q.questionHindi)}
+          </div>
+        `
+        : ""
+    }
+
     ${q._options
       .map(
         (opt) => `
-      <label class="exam-option ${answers[q.id] === opt.key ? "is-selected" : ""}" data-key="${opt.key}">
-        <input type="radio" name="option" value="${opt.key}" ${answers[q.id] === opt.key ? "checked" : ""} />
-        <span class="exam-option__text">
-          <span class="exam-option__text-en">${escapeHtml(opt.text)}</span>
-          ${opt.textHindi ? `<span class="exam-option__text-hi">${escapeHtml(opt.textHindi)}</span>` : ""}
-        </span>
-      </label>`
+
+          <label
+            class="exam-option
+            ${
+              answers[q.id] === opt.key
+                ? "is-selected"
+                : ""
+            }"
+            data-key="${opt.key}"
+          >
+
+            <input
+              type="radio"
+              name="option"
+              value="${opt.key}"
+              ${
+                answers[q.id] === opt.key
+                  ? "checked"
+                  : ""
+              }
+            />
+
+            <span class="exam-option__text">
+
+              <span class="exam-option__text-en">
+                ${escapeHtml(opt.text)}
+              </span>
+
+              ${
+                opt.textHindi
+                  ? `
+                    <span class="exam-option__text-hi">
+                      ${escapeHtml(opt.textHindi)}
+                    </span>
+                  `
+                  : ""
+              }
+
+            </span>
+
+          </label>
+
+        `
       )
       .join("")}
+
   `;
 
-  $all(".exam-option", card).forEach((label) => {
-    label.addEventListener("click", () => {
-      const key = label.dataset.key;
-      answers[q.id] = key;
-      $all(".exam-option", card).forEach((l) => l.classList.remove("is-selected"));
-      label.classList.add("is-selected");
-      persistSession();
-      renderPalette();
-    });
-  });
+
+  $all(".exam-option", card).forEach(
+    (label) => {
+
+      label.addEventListener(
+        "click",
+        () => {
+
+          const key =
+            label.dataset.key;
+
+          answers[q.id] = key;
+
+          $all(
+            ".exam-option",
+            card
+          ).forEach(
+            (l) =>
+              l.classList.remove(
+                "is-selected"
+              )
+          );
+
+          label.classList.add(
+            "is-selected"
+          );
+
+          persistSession();
+
+          renderPalette();
+
+        }
+      );
+
+    }
+  );
 
   renderPalette();
 }
 
+
 function goToQuestion(index) {
-  if (index < 0 || index >= questions.length) return;
+
+  if (
+    index < 0 ||
+    index >= questions.length
+  ) {
+    return;
+  }
+
   currentIndex = index;
+
   renderQuestion();
 }
 
+
+/* =========================================================
+   GLOBAL ACTIONS
+   ========================================================= */
+
 function wireGlobalActions() {
-  const onPrev = () => goToQuestion(currentIndex - 1);
+
+  const onPrev = () => {
+
+    goToQuestion(
+      currentIndex - 1
+    );
+
+  };
+
+
   const onNext = () => {
+
     persistSession();
-    goToQuestion(currentIndex + 1);
+
+    goToQuestion(
+      currentIndex + 1
+    );
+
   };
+
+
   const onMarkReview = () => {
-    const q = questions[currentIndex];
-    const answered = answers[q.id] !== undefined;
-    statuses[q.id] = answered ? STATUS.ANSWERED_REVIEW : STATUS.REVIEW;
+
+    const q =
+      questions[currentIndex];
+
+    const answered =
+      answers[q.id] !== undefined;
+
+    statuses[q.id] =
+      answered
+        ? STATUS.ANSWERED_REVIEW
+        : STATUS.REVIEW;
+
     persistSession();
+
     renderPalette();
-    goToQuestion(Math.min(currentIndex + 1, questions.length - 1));
+
+    goToQuestion(
+      Math.min(
+        currentIndex + 1,
+        questions.length - 1
+      )
+    );
+
   };
-  // New: clears the answer for the current question without moving
-  // away from it. Purely additive — doesn't touch scoring/submission.
+
+
+  // Clears current answer.
+
   const onClearAnswer = () => {
-    const q = questions[currentIndex];
+
+    const q =
+      questions[currentIndex];
+
     delete answers[q.id];
-    const wasReview = [STATUS.REVIEW, STATUS.ANSWERED_REVIEW].includes(statuses[q.id]);
-    statuses[q.id] = wasReview ? STATUS.REVIEW : STATUS.VISITED;
+
+    const wasReview =
+      [
+        STATUS.REVIEW,
+        STATUS.ANSWERED_REVIEW,
+      ].includes(
+        statuses[q.id]
+      );
+
+    statuses[q.id] =
+      wasReview
+        ? STATUS.REVIEW
+        : STATUS.VISITED;
+
     persistSession();
+
     renderQuestion();
+
   };
 
-  $("#prevBtn").addEventListener("click", onPrev);
-  $("#prevBtnMobile").addEventListener("click", onPrev);
-  $("#saveNextBtn").addEventListener("click", onNext);
-  $("#saveNextBtnMobile").addEventListener("click", onNext);
-  $("#markReviewBtn").addEventListener("click", onMarkReview);
-  $("#markReviewBtnMobile").addEventListener("click", onMarkReview);
-  $("#clearAnswerBtn").addEventListener("click", onClearAnswer);
-  $("#clearAnswerBtnMobile").addEventListener("click", onClearAnswer);
 
-  $("#submitBtn").addEventListener("click", openSubmitModal);
- 
-  $("#submitBtnHeader").addEventListener("click", openSubmitModal);
-  $("#submitCancelBtn").addEventListener("click", closeSubmitModal);
-  $("#submitFinalBtn").addEventListener("click", finalSubmit);
+  $("#prevBtn")
+    .addEventListener(
+      "click",
+      onPrev
+    );
 
-  $("#openPaletteBtn").addEventListener("click", openPaletteSheet);
-  $("#paletteSheetBackdrop").addEventListener("click", closePaletteSheet);
+  $("#prevBtnMobile")
+    .addEventListener(
+      "click",
+      onPrev
+    );
+
+  $("#saveNextBtn")
+    .addEventListener(
+      "click",
+      onNext
+    );
+
+  $("#saveNextBtnMobile")
+    .addEventListener(
+      "click",
+      onNext
+    );
+
+  $("#markReviewBtn")
+    .addEventListener(
+      "click",
+      onMarkReview
+    );
+
+  $("#markReviewBtnMobile")
+    .addEventListener(
+      "click",
+      onMarkReview
+    );
+
+  $("#clearAnswerBtn")
+    .addEventListener(
+      "click",
+      onClearAnswer
+    );
+
+  $("#clearAnswerBtnMobile")
+    .addEventListener(
+      "click",
+      onClearAnswer
+    );
+
+  $("#submitBtn")
+    .addEventListener(
+      "click",
+      openSubmitModal
+    );
+
+  $("#submitBtnHeader")
+    .addEventListener(
+      "click",
+      openSubmitModal
+    );
+
+  $("#submitCancelBtn")
+    .addEventListener(
+      "click",
+      closeSubmitModal
+    );
+
+  $("#submitFinalBtn")
+    .addEventListener(
+      "click",
+      finalSubmit
+    );
+
+  $("#openPaletteBtn")
+    .addEventListener(
+      "click",
+      openPaletteSheet
+    );
+
+  $("#paletteSheetBackdrop")
+    .addEventListener(
+      "click",
+      closePaletteSheet
+    );
 }
+
+
+/* =========================================================
+   PALETTE SHEET
+   ========================================================= */
 
 function openPaletteSheet() {
-  $("#paletteSheetBackdrop").classList.add("is-open");
-  $("#paletteSheet").classList.add("is-open");
+
+  $("#paletteSheetBackdrop")
+    .classList.add("is-open");
+
+  $("#paletteSheet")
+    .classList.add("is-open");
 }
+
 function closePaletteSheet() {
-  $("#paletteSheetBackdrop").classList.remove("is-open");
-  $("#paletteSheet").classList.remove("is-open");
+
+  $("#paletteSheetBackdrop")
+    .classList.remove("is-open");
+
+  $("#paletteSheet")
+    .classList.remove("is-open");
 }
+
+
+/* =========================================================
+   SUBMIT MODAL
+   ========================================================= */
 
 function openSubmitModal() {
-  const answeredCount = Object.keys(answers).length;
-  const reviewCount = questions.filter((q) =>
-    [STATUS.REVIEW, STATUS.ANSWERED_REVIEW].includes(statuses[q.id])
-  ).length;
+
+  const answeredCount =
+    Object.keys(answers).length;
+
+  const reviewCount =
+    questions.filter(
+      (q) =>
+        [
+          STATUS.REVIEW,
+          STATUS.ANSWERED_REVIEW,
+        ].includes(
+          statuses[q.id]
+        )
+    ).length;
+
   $("#confirmSummary").innerHTML = `
-    <div><strong>${answeredCount}</strong><span>Answered</span></div>
-    <div><strong>${questions.length - answeredCount}</strong><span>Unattempted</span></div>
-    <div><strong>${reviewCount}</strong><span>Marked</span></div>
+
+    <div>
+      <strong>${answeredCount}</strong>
+      <span>Answered</span>
+    </div>
+
+    <div>
+      <strong>
+        ${questions.length - answeredCount}
+      </strong>
+      <span>Unattempted</span>
+    </div>
+
+    <div>
+      <strong>${reviewCount}</strong>
+      <span>Marked</span>
+    </div>
+
   `;
-  $("#submitModalBackdrop").classList.add("is-open");
+
+  $("#submitModalBackdrop")
+    .classList.add("is-open");
 }
+
+
 function closeSubmitModal() {
-  $("#submitModalBackdrop").classList.remove("is-open");
+
+  $("#submitModalBackdrop")
+    .classList.remove("is-open");
 }
+
+
+/* =========================================================
+   TIMER
+   ========================================================= */
 
 function startTimer() {
+
   updateTimerDisplay();
-  timerHandle = setInterval(() => {
-    secondsRemaining -= 1;
-    if (secondsRemaining <= 0) {
-      secondsRemaining = 0;
-      updateTimerDisplay();
-      clearInterval(timerHandle);
-      toast("Time's up! Submitting your test...", "warning");
-      finalSubmit(true);
-      return;
-    }
-    updateTimerDisplay();
-    if (secondsRemaining % 5 === 0) persistSession();
-  }, 1000);
+
+  timerHandle =
+    setInterval(
+      () => {
+
+        secondsRemaining -= 1;
+
+        if (secondsRemaining <= 0) {
+
+          secondsRemaining = 0;
+
+          updateTimerDisplay();
+
+          clearInterval(timerHandle);
+
+          toast(
+            "Time's up! Submitting your test...",
+            "warning"
+          );
+
+          finalSubmit(true);
+
+          return;
+        }
+
+        updateTimerDisplay();
+
+        if (
+          secondsRemaining % 5 === 0
+        ) {
+          persistSession();
+        }
+
+      },
+      1000
+    );
 }
 
+
 function updateTimerDisplay() {
-  const valueEl = $("#examTimerValue");
-  const cardEl = $("#examTimer");
-  const ringEl = $("#examTimerRing");
-  if (!valueEl || !cardEl) return;
-  valueEl.textContent = formatDuration(secondsRemaining);
-  cardEl.classList.toggle("is-low", secondsRemaining <= 60);
-  // Purely visual progress ring — does not affect the countdown itself.
+
+  const valueEl =
+    $("#examTimerValue");
+
+  const cardEl =
+    $("#examTimer");
+
+  const ringEl =
+    $("#examTimerRing");
+
+  if (
+    !valueEl ||
+    !cardEl
+  ) {
+    return;
+  }
+
+  valueEl.textContent =
+    formatDuration(
+      secondsRemaining
+    );
+
+  cardEl.classList.toggle(
+    "is-low",
+    secondsRemaining <= 60
+  );
+
+
+  // Visual progress ring only.
+
   if (ringEl) {
-    const totalSeconds = (test.duration || 60) * 60;
-    const pct = totalSeconds > 0 ? Math.max(0, Math.min(100, (secondsRemaining / totalSeconds) * 100)) : 0;
-    ringEl.style.setProperty("--ring-pct", `${pct}%`);
+
+    const totalSeconds =
+      (test.duration || 60) * 60;
+
+    const pct =
+      totalSeconds > 0
+        ? Math.max(
+            0,
+            Math.min(
+              100,
+              (secondsRemaining /
+                totalSeconds) *
+                100
+            )
+          )
+        : 0;
+
+    ringEl.style.setProperty(
+      "--ring-pct",
+      `${pct}%`
+    );
   }
 }
 
+
+/* =========================================================
+   FINAL SUBMIT + SCORING
+   ========================================================= */
+
 async function finalSubmit(auto = false) {
+
   clearInterval(timerHandle);
+
   window.onbeforeunload = null;
+
   closeSubmitModal();
 
-  sessionStorage.removeItem("examnest_instructions_ack_" + testId);
+  sessionStorage.removeItem(
+    "examnest_instructions_ack_" +
+      testId
+  );
 
-  const timeUsed = (test.duration || 60) * 60 - secondsRemaining;
+
+  /* -------------------------------------------------------
+     Time
+     ------------------------------------------------------- */
+
+  const timeUsed =
+    (test.duration || 60) * 60 -
+    secondsRemaining;
+
+
+  /* -------------------------------------------------------
+     Counters
+     ------------------------------------------------------- */
+
   let correct = 0;
   let wrong = 0;
   let unattempted = 0;
-  const perQuestion = questions.map((q) => {
-    const given = answers[q.id];
-    let status = "unattempted";
-    if (given === undefined) {
-      unattempted++;
-    } else if (given === q.answer) {
-      correct++;
-      status = "correct";
-    } else {
-      wrong++;
-      status = "wrong";
-    }
-    return {
-      id: q.id,
-      question: q.question,
-      questionHindi: q.questionHindi || "",
-      options: q._options,
-      yourAnswer: given || null,
-      correctAnswer: q.answer,
-      status,
-    };
-  });
 
-  const negMarking = Number(test.negativeMarking) || 0;
-  const rawScore = correct - wrong * negMarking;
-  const maxScore = questions.length;
-  const accuracy = correct + wrong > 0 ? (correct / (correct + wrong)) * 100 : 0;
-  const score = Math.round(rawScore * 100) / 100;
+
+  /* -------------------------------------------------------
+     Per-question result
+     ------------------------------------------------------- */
+
+  const perQuestion =
+    questions.map((q) => {
+
+      const given =
+        answers[q.id];
+
+      let status =
+        "unattempted";
+
+      if (given === undefined) {
+
+        unattempted++;
+
+      } else if (
+        given === q.answer
+      ) {
+
+        correct++;
+
+        status = "correct";
+
+      } else {
+
+        wrong++;
+
+        status = "wrong";
+      }
+
+      return {
+
+        id: q.id,
+
+        question: q.question,
+
+        questionHindi:
+          q.questionHindi || "",
+
+        options: q._options,
+
+        yourAnswer:
+          given || null,
+
+        correctAnswer:
+          q.answer,
+
+        status,
+
+      };
+
+    });
+
+
+  /* =======================================================
+     MARKS CALCULATION
+     =======================================================
+
+     Correct Answer:
+       + marksPerQuestion
+
+     Wrong Answer:
+       - negativeMarking
+
+     Unattempted:
+       0
+
+     Example:
+
+       100 questions
+       2 marks/question
+       0.5 negative
+
+       70 correct = 140
+       20 wrong   = -10
+       10 blank   = 0
+
+       Final Score = 130
+       Maximum     = 200
+  ======================================================= */
+
+
+  const marksPerQuestion =
+    Number(
+      test.marksPerQuestion
+    ) || 1;
+
+
+  const negMarking =
+    Number(
+      test.negativeMarking
+    ) || 0;
+
+
+  const rawScore =
+    correct * marksPerQuestion -
+    wrong * negMarking;
+
+
+  const maxScore =
+    questions.length *
+    marksPerQuestion;
+
+
+  /*
+   * Prevent floating point display
+   * issues such as 129.999999999.
+   */
+
+  const score =
+    Math.round(
+      rawScore * 100
+    ) / 100;
+
+
+  const accuracy =
+    correct + wrong > 0
+      ? (correct /
+          (correct + wrong)) *
+        100
+      : 0;
+
+
+  /* -------------------------------------------------------
+     Result object
+     ------------------------------------------------------- */
 
   const result = {
+
     testId,
-    testTitle: test.title,
+
+    testTitle:
+      test.title,
+
     score,
+
     maxScore,
+
+    marksPerQuestion,
+
+    negativeMarking:
+      negMarking,
+
     accuracy,
+
     correct,
+
     wrong,
+
     unattempted,
+
     timeUsed,
-    duration: (test.duration || 60) * 60,
+
+    duration:
+      (test.duration || 60) * 60,
+
     perQuestion,
-    submittedAt: new Date().toISOString(),
-    autoSubmitted: auto,
+
+    submittedAt:
+      new Date().toISOString(),
+
+    autoSubmitted:
+      auto,
+
   };
 
+
+  /* -------------------------------------------------------
+     Save attempt to Firestore
+     ------------------------------------------------------- */
+
   try {
-    await addDoc(collection(db, "attempts"), {
-      testId,
+
+    await addDoc(
+      collection(db, "attempts"),
+      {
+
+        testId,
+
+        score,
+
+        maxScore,
+
+        marksPerQuestion,
+
+        negativeMarking:
+          negMarking,
+
+        accuracy,
+
+        correct,
+
+        wrong,
+
+        unattempted,
+
+        timeUsed,
+
+        answers,
+
+        tabSwitchCount,
+
+        fullscreenExitCount,
+
+        submittedAt:
+          serverTimestamp(),
+
+      }
+    );
+
+  } catch (err) {
+
+    console.error(
+      "Couldn't save attempt to Firestore:",
+      err
+    );
+
+  }
+
+
+  /* -------------------------------------------------------
+     Local attempt/result storage
+     ------------------------------------------------------- */
+
+  recordAttempt(
+    testId,
+    {
       score,
       maxScore,
       accuracy,
-      correct,
-      wrong,
-      unattempted,
-      timeUsed,
-      answers,
-      tabSwitchCount,
-      fullscreenExitCount,
-      submittedAt: serverTimestamp(),
-    });
-  } catch (err) {
-    console.error("Couldn't save attempt to Firestore:", err);
-  }
+    }
+  );
 
-  recordAttempt(testId, { score, maxScore, accuracy });
-  clearExamSession(testId);
-  saveLatestResult(result);
+  clearExamSession(
+    testId
+  );
 
-  // replace() so the Back button can never land on this editable exam again.
-  window.location.replace(`result.html?testId=${encodeURIComponent(testId)}`);
+  saveLatestResult(
+    result
+  );
+
+
+  /* -------------------------------------------------------
+     Go to result page
+     ------------------------------------------------------- */
+
+  // replace() prevents Back button from returning
+  // to the editable exam.
+
+  window.location.replace(
+    `result.html?testId=${encodeURIComponent(
+      testId
+    )}`
+  );
 }

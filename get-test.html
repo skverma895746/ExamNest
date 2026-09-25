@@ -51,12 +51,11 @@
       <input type="search" id="searchInput" placeholder="Search tests by title..." aria-label="Search tests" />
     </div>
 
-    <div id="testGrid" class="test-grid" aria-live="polite">
-      <!-- Skeletons while loading -->
-      <div class="skeleton" style="height:220px"></div>
-      <div class="skeleton" style="height:220px"></div>
-      <div class="skeleton" style="height:220px"></div>
-    </div>
+ <div id="testGrid" class="test-grid" aria-live="polite">
+  <div class="empty-state" style="grid-column:1/-1;">
+    Loading tests...
+  </div>
+</div>
   </div>
 </main>
 

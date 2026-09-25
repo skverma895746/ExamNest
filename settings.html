@@ -86,19 +86,24 @@
 
     <form id="defaultsForm" class="form-grid" style="max-width:420px;">
 
-      <div class="form-row">
+     <div class="form-row">
 
-        <div>
-          <label for="defaultTimer">Default Timer (minutes)</label>
-          <input type="number" id="defaultTimer" min="1" value="60">
-        </div>
+  <div>
+    <label for="defaultTimer">Default Timer (minutes)</label>
+    <input type="number" id="defaultTimer" min="1" value="60">
+  </div>
 
-        <div>
-          <label for="defaultNegative">Default Negative Marking</label>
-          <input type="number" id="defaultNegative" min="0" step="any" value="0">
-        </div>
+  <div>
+    <label for="defaultMarks">Default Marks Per Question</label>
+    <input type="number" id="defaultMarks" step="any" value="1">
+  </div>
 
-      </div>
+  <div>
+    <label for="defaultNegative">Default Negative Marking</label>
+    <input type="number" id="defaultNegative" min="0" step="0.25" value="0">
+  </div>
+
+</div>
 
       <button type="submit" class="btn btn--primary" id="defaultsBtn">
         Save Defaults
@@ -238,12 +243,19 @@ async function saveDefaults(e){
 
   try{
 
-   await setDoc(doc(db,"settings","global"),{
+await setDoc(doc(db,"settings","global"),{
   defaultTimer:Number($("#defaultTimer").value)||60,
+
+  defaultMarksPerQuestion:Number($("#defaultMarks").value)||1,
+
   defaultNegative:Number($("#defaultNegative").value)||0,
+
   defaultDifficulty:"medium",
+
   defaultShuffleQuestions:false,
+
   defaultShuffleOptions:false
+
 },{merge:true});
 
     toast("Defaults saved.","success");
@@ -279,9 +291,11 @@ async function loadDefaults(){
 
       const d=snap.data();
 
-      $("#defaultTimer").value=d.defaultTimer??60;
+     $("#defaultTimer").value=d.defaultTimer??60;
 
-      $("#defaultNegative").value=d.defaultNegative??0;
+$("#defaultMarks").value=d.defaultMarksPerQuestion??1;
+
+$("#defaultNegative").value=d.defaultNegative??0;
 
     }
 
