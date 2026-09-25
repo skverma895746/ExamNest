@@ -465,6 +465,45 @@ p {
   background: var(--blue);
 }
 
+.exam-card-mock__palette {
+  display: flex;
+  gap: 6px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--border);
+}
+
+.exam-card-mock__cell {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: #f8fafc;
+  color: var(--navy-60);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.exam-card-mock__cell.is-answered {
+  background: #16a34a;
+  color: #fff;
+  border-color: transparent;
+}
+
+.exam-card-mock__cell.is-current {
+  outline: 2px solid var(--blue);
+  outline-offset: 1.5px;
+}
+
+.exam-card-mock__cell.is-review {
+  background: #f59e0b;
+  color: #fff;
+  border-color: transparent;
+}
+
 .floating-chip {
   position: absolute;
   background: #fff;
@@ -481,7 +520,7 @@ p {
 .floating-chip--score {
   top: -18px;
   right: -14px;
-  color: var(--success);
+  color: #16a34a;
 }
 
 .floating-chip--time {
@@ -1372,5 +1411,163 @@ p {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+/* Note: .instructions-card/-meta/-rules/-ack/-wrap are styled in
+   responsive.css (which loads after this file, so rules defined here
+   would be overridden anyway) — see that file for the instructions
+   page. .instructions-security is new; it's added there too, kept
+   next to the rest of the instructions-page rules. */
+
+/* Exam "Begin" gate (renderBeginGate in exam.js) --------------------------- */
+.begin-gate {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #f4f7fb;
+}
+
+.begin-gate__icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--blue) 0%, #1d4ed8 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  margin: 0 auto 18px;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.28);
+}
+
+.begin-gate__list {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0 26px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.begin-gate__list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.88rem;
+  color: var(--navy-60);
+  line-height: 1.5;
+}
+
+.begin-gate__list li::before {
+  content: "•";
+  color: var(--blue);
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+/* Exam page loading screen (exam.html initial skeleton) -------------------- */
+.exam-loading {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  gap: 6px;
+}
+
+.exam-loading__logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--blue) 0%, #1d4ed8 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+  margin-bottom: 18px;
+}
+
+.exam-loading__spinner {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 3px solid var(--border);
+  border-top-color: var(--blue);
+  animation: exam-loading-spin 800ms linear infinite;
+  margin-bottom: 18px;
+}
+
+@keyframes exam-loading-spin {
+  to { transform: rotate(360deg); }
+}
+
+.exam-loading__text {
+  font-weight: 700;
+  color: var(--navy);
+  font-size: 1.02rem;
+  margin: 0;
+}
+
+.exam-loading__subtext {
+  color: var(--navy-60);
+  font-size: 0.85rem;
+  margin: 6px 0 0;
+  max-width: 320px;
+}
+
+/* ---------------------------------------------------------------------------
+   Prep banner — bright, attention-grabbing strip under the navbar telling
+   visitors the platform is free and how to reach the owner for exam-prep
+   help. Deliberately loud (amber/orange) so it doesn't blend into the
+   blue/navy site theme — that contrast is the point.
+--------------------------------------------------------------------------- */
+.prep-banner {
+  background: linear-gradient(90deg, #f59e0b, #fb923c);
+  border-bottom: 1px solid #d97706;
+}
+
+.prep-banner__inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 12px 20px;
+  flex-wrap: wrap;
+  text-align: center;
+}
+
+.prep-banner__icon {
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+
+.prep-banner__text {
+  margin: 0;
+  color: #451a03;
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.prep-banner__text strong {
+  color: #7c2d12;
+  font-weight: 800;
+}
+
+@media (max-width: 640px) {
+  .prep-banner__inner {
+    padding: 10px 16px;
+    gap: 8px;
+  }
+  .prep-banner__text {
+    font-size: 0.82rem;
   }
 }

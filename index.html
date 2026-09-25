@@ -29,8 +29,8 @@
 <meta name="twitter:image" content="https://examnests.netlify.app/assets/icons/favicon.svg" />
 
 <link rel="icon" href="assets/icons/favicon.svg" />
-<link rel="manifest" href="./manifest.json" />
-<link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png" />
+<link rel="manifest" href="/manifest.json" />
+<link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
 <script src="./js/pwa.js" defer></script>
 <link rel="stylesheet" href="css/style.css" />
 <link rel="stylesheet" href="css/responsive.css" />
@@ -114,6 +114,16 @@
   </div>
 </header>
 
+<div class="prep-banner">
+  <div class="container prep-banner__inner">
+    <span class="prep-banner__icon">🎯</span>
+    <p class="prep-banner__text">
+      Preparing for a specific exam? ExamNest is <strong>100% free</strong> to use —
+      contact the owner directly for personalized guidance and study support.
+    </p>
+  </div>
+</div>
+
 <main id="main">
 
   <!-- Hero -->
@@ -122,7 +132,7 @@
     <div class="container hero__inner">
       <div>
         <span class="eyebrow-badge">✓ No signup needed for candidates</span>
-        <h1>Practice like the <span class="grad">real exam.</span></h1>
+        <h1>Practice Like the <span class="grad">Real Exam</span></h1>
         <p class="hero__desc">
           ExamNest gives you a genuine CBT-style testing experience — timed sections,
           a question palette, negative marking and detailed analysis — the moment you
@@ -150,6 +160,14 @@
           <div class="exam-card-mock__opt"><span class="dot"></span> Stack</div>
           <div class="exam-card-mock__opt"><span class="dot"></span> Tree</div>
           <div class="exam-card-mock__opt"><span class="dot"></span> Graph</div>
+          <div class="exam-card-mock__palette">
+            <span class="exam-card-mock__cell is-answered">1</span>
+            <span class="exam-card-mock__cell is-answered">2</span>
+            <span class="exam-card-mock__cell is-current">3</span>
+            <span class="exam-card-mock__cell is-review">4</span>
+            <span class="exam-card-mock__cell">5</span>
+            <span class="exam-card-mock__cell">6</span>
+          </div>
         </div>
         <div class="floating-chip floating-chip--score">▲ 82% Accuracy</div>
         <div class="floating-chip floating-chip--time">⏱ Auto-submit on time-up</div>
@@ -207,14 +225,6 @@
         <div class="feature">
           <div class="feature__icon">🔒</div>
           <div><h3>Private by design</h3><p>Attempt history is stored on your device only — we don't ask who you are.</p></div>
-        </div>
-        <div class="feature" id="pwaFeatureCard">
-          <div class="feature__icon">📲</div>
-          <div>
-            <h3>Install as an app</h3>
-            <p>Add ExamNest to your home screen for one-tap access and a faster, app-like experience — no app store needed.</p>
-            <button type="button" id="pwaCardInstallBtn" class="btn btn--ghost" style="margin-top:10px; display:none; padding:8px 16px; font-size:13px;">Install Now</button>
-          </div>
         </div>
       </div>
     </div>

@@ -8,8 +8,8 @@
 <meta name="robots" content="noindex, follow" />
 <meta name="theme-color" content="#2563EB" />
 <link rel="icon" href="assets/icons/favicon.svg" />
-<link rel="manifest" href="./manifest.json" />
-<link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png" />
+<link rel="manifest" href="/manifest.json" />
+<link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
 <script src="./js/pwa.js" defer></script>
 <link rel="stylesheet" href="css/style.css" />
 <link rel="stylesheet" href="css/responsive.css" />
@@ -30,7 +30,7 @@
 </header>
 
 <main class="instructions-wrap" id="instructionsWrap">
-  <div class="skeleton" style="height:420px;"></div>
+  <div class="instructions-card"><div class="skeleton" style="height:420px;"></div></div>
 </main>
 
 <script type="module">
@@ -78,11 +78,15 @@
   }
 
   function render(test, questionCount) {
+    const negMarkText = test.negativeMarking
+      ? `${test.negativeMarking} mark(s) will be deducted for every wrong answer.`
+      : "There is no negative marking on this test — wrong answers score zero, not negative.";
+
     wrap.innerHTML = `
       <div class="instructions-card">
         <span class="eyebrow-badge">📋 Before you begin</span>
         <h1>${escapeHtml(test.title)}</h1>
-        <p style="color:var(--navy-60);">${escapeHtml(test.description || "")}</p>
+        <p style="color:var(--navy-60);">${escapeHtml(test.description || "Read the guidelines below carefully before starting. Once the timer begins, it cannot be paused.")}</p>
 
         <div class="instructions-meta">
           <div><strong>${questionCount}</strong><span>Questions</span></div>
@@ -90,18 +94,24 @@
           <div><strong>${test.negativeMarking ?? 0}</strong><span>Negative Marking</span></div>
         </div>
 
+        <div class="instructions-section-title">Exam Rules</div>
         <ul class="instructions-rules">
-          <li>The timer starts the moment you click <strong>Start Test</strong> and cannot be paused.</li>
-          <li>Use <strong>Save &amp; Next</strong> to record an answer and move on, or <strong>Mark for Review</strong> to flag a question.</li>
-          <li>${test.negativeMarking ? `${test.negativeMarking} mark(s) will be deducted for every wrong answer.` : "There is no negative marking on this test."}</li>
-          <li>Your answers are auto-saved as you go, so a brief connection drop won't lose your progress.</li>
+          <li>The timer starts the moment you click <strong>Start Test</strong> and cannot be paused or restarted.</li>
+          <li>Each question offers four options — select one, then use <strong>Save &amp; Next</strong> to record it and move on, or <strong>Mark for Review</strong> to flag it and come back later.</li>
+          <li>${negMarkText}</li>
+          <li>Your answers are auto-saved as you go, so a brief connection drop or accidental refresh won't lose your progress.</li>
+          <li>You can navigate freely between questions using <strong>Previous/Next</strong> or the question palette, in any order, until you submit.</li>
           <li>When the timer reaches zero, the test <strong>auto-submits</strong> exactly as it stands — unattempted questions are scored as unattempted.</li>
           <li>Once submitted, answers are locked and cannot be changed — including with the browser Back button.</li>
         </ul>
 
+        <div class="instructions-security">
+          <strong>🔒 Exam integrity monitoring.</strong> To keep results fair for everyone, this test tracks tab switches, and disables right-click and common developer-tools shortcuts while it's in progress. This doesn't collect any personal data beyond your answers — it simply helps flag irregular activity. We recommend using a stable connection and staying on this tab for the full duration.
+        </div>
+
         <label class="instructions-ack">
           <input type="checkbox" id="ackCheckbox" />
-          <span>I have read and understood all instructions.</span>
+          <span>I have read and understood all the instructions above, and I'm ready to begin.</span>
         </label>
 
         <button class="btn btn--primary btn--block" id="startBtn" disabled>Start Test</button>

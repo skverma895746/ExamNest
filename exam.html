@@ -3,31 +3,415 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="robots" content="noindex, nofollow" />
-<meta http-equiv="Cache-Control" content="no-store" />
-<title>Exam in progress — ExamNest</title>
-<link rel="icon" href="assets/icons/favicon.svg" />
-<link rel="manifest" href="./manifest.json" />
+<title>ExamNest — Practice Like the Real Exam | Free Online Mock Test Platform</title>
+<meta name="description" content="ExamNest is a free CBT-style mock test platform. No signup required — pick a test and start practicing in seconds. Real exam interface, timer, question palette and instant result analysis." />
+<meta name="keywords" content="ExamNest, online mock test, CBT test platform, free mock test, computer based test, practice test online, exam preparation, question palette, negative marking, instant result analysis" />
+<meta name="author" content="ExamNest" />
+<meta name="robots" content="index, follow" />
+<meta name="googlebot" content="index, follow" />
+<meta name="language" content="English" />
 <meta name="theme-color" content="#2563EB" />
-<link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png" />
+<link rel="canonical" href="//https://examnests.netlify.app/" />
+<meta name="google-site-verification" content="H7Qs-8lR_VrNiJ3Majl10sVrjP0ppvYT65sYFAKZ5WU" />
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="ExamNest" />
+<meta property="og:url" content="https://examnests.netlify.app/" />
+<meta property="og:title" content="ExamNest — Practice Like the Real Exam" />
+<meta property="og:description" content="Free CBT-style mock tests with a real exam interface. No signup required — pick a test and start practicing in seconds." />
+<meta property="og:image" content="https://examnests.netlify.app/assets/icons/favicon.svg" />
+<meta property="og:locale" content="en_IN" />
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="ExamNest — Practice Like the Real Exam" />
+<meta name="twitter:description" content="Free CBT-style mock tests with a real exam interface. No signup required." />
+<meta name="twitter:image" content="https://examnests.netlify.app/assets/icons/favicon.svg" />
+
+<link rel="icon" href="assets/icons/favicon.svg" />
+<link rel="manifest" href="/manifest.json" />
+<link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
 <script src="./js/pwa.js" defer></script>
 <link rel="stylesheet" href="css/style.css" />
-<link rel="stylesheet" href="css/exam.css" />
 <link rel="stylesheet" href="css/responsive.css" />
+
+<!-- Structured data for Google -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "ExamNest",
+  "alternateName": "ExamNest — Practice Like the Real Exam",
+  "url": "https://examnests.netlify.app/",
+  "description": "Free CBT-style mock test platform with a real exam interface, timer, question palette and instant result analysis. No signup required.",
+  "inLanguage": "en",
+  "publisher": {
+    "@type": "Organization",
+    "name": "ExamNest",
+    "url": "https://examnests.netlify.app/"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Do I need an account to take a test on ExamNest?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. Candidates can browse and take any published test without signing up. Only administrators need to log in."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Are the mock tests on ExamNest free?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes, every published test is free to attempt with no account and no payment required."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I retake a test on ExamNest?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Once you have attempted a test the button changes to Retest, and you can retake it as many times as you like."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does ExamNest apply negative marking?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Negative marking is applied only where the test creator has enabled it. The instructions page shows the marking scheme before the test begins."
+      }
+    }
+  ]
+}
+</script>
 </head>
-<body class="exam-body">
-<div id="examRoot">
-  <div style="min-height:60vh;display:flex;align-items:center;justify-content:center;">
-    <div class="skeleton" style="width:min(600px,90vw);height:340px;"></div>
+<body>
+
+<a class="skip-link" href="#main" style="position:absolute;left:-999px;">Skip to content</a>
+
+<header class="navbar" id="navbar">
+  <div class="container navbar__inner">
+    <a href="index.html" class="brand">
+      <span class="brand__mark">EN</span>
+      ExamNest
+    </a>
+    <nav class="navbar__links">
+      <a href="get-test.html" class="btn btn--ghost">Get Test</a>
+      <a href="https://sndp-portfolio.netlify.app/portfolio.html#contact" class="btn btn--ghost" target="_blank" rel="noopener">Contact Us</a>
+      <a href="login.html" class="btn btn--primary">Admin Login</a>
+      <button class="hamburger" id="hamburgerBtn" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<div class="prep-banner">
+  <div class="container prep-banner__inner">
+    <span class="prep-banner__icon">🎯</span>
+    <p class="prep-banner__text">
+     Getting ready for a competitive exam? ExamNest offers 100% free study guidance and support. If you cannot find the practice material you need, you can request a custom  upload by contacting the owner directly
+     .Simply send a message 
+     specifying your exam name and topics. We will review your request and get your  live shortly.
+    </p>
   </div>
 </div>
 
+<main id="main">
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="blob-field"><div class="blob blob--1"></div><div class="blob blob--2"></div></div>
+    <div class="container hero__inner">
+      <div>
+        <span class="eyebrow-badge">✓ No signup needed for candidates</span>
+        <h1>Practice Like the <span class="grad">Real Exam</span></h1>
+        <p class="hero__desc">
+          ExamNest gives you a genuine CBT-style testing experience — timed sections,
+          a question palette, negative marking and detailed analysis — the moment you
+          click start. No account, no waiting.
+        </p>
+        <div class="hero__actions">
+          <a href="get-test.html" class="btn btn--primary">Start a Free Test</a>
+          <a href="#how-it-works" class="btn btn--ghost">See how it works</a>
+        </div>
+        <div class="trust-row">
+          <div class="trust-row__item"><span class="trust-row__dot"></span>No login required</div>
+          <div class="trust-row__item"><span class="trust-row__dot"></span>Instant results</div>
+          <div class="trust-row__item"><span class="trust-row__dot"></span>Your data stays on your device</div>
+        </div>
+      </div>
+
+      <div class="hero__art">
+        <div class="exam-card-mock">
+          <div class="exam-card-mock__top">
+            <strong>Q 14 / 60</strong>
+            <span class="exam-card-mock__timer">42:18</span>
+          </div>
+          <p class="exam-card-mock__q">Which data structure uses FIFO ordering?</p>
+          <div class="exam-card-mock__opt is-selected"><span class="dot"></span> Queue</div>
+          <div class="exam-card-mock__opt"><span class="dot"></span> Stack</div>
+          <div class="exam-card-mock__opt"><span class="dot"></span> Tree</div>
+          <div class="exam-card-mock__opt"><span class="dot"></span> Graph</div>
+          <div class="exam-card-mock__palette">
+            <span class="exam-card-mock__cell is-answered">1</span>
+            <span class="exam-card-mock__cell is-answered">2</span>
+            <span class="exam-card-mock__cell is-current">3</span>
+            <span class="exam-card-mock__cell is-review">4</span>
+            <span class="exam-card-mock__cell">5</span>
+            <span class="exam-card-mock__cell">6</span>
+          </div>
+        </div>
+        <div class="floating-chip floating-chip--score">▲ 82% Accuracy</div>
+        <div class="floating-chip floating-chip--time">⏱ Auto-submit on time-up</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section class="section" id="about">
+    <div class="container">
+      <div class="section__head">
+        <h2>What ExamNest is</h2>
+        <p>A lightweight platform for anyone preparing for a competitive or academic exam to practice under real test conditions.</p>
+      </div>
+      <div class="about-grid">
+        <div class="about-card">
+          <div class="about-card__icon">🎯</div>
+          <h3>Built for practice</h3>
+          <p>Every test mirrors real exam timing, marking and interface conventions, so test day feels familiar.</p>
+        </div>
+        <div class="about-card">
+          <div class="about-card__icon">🗂️</div>
+          <h3>Curated by one admin</h3>
+          <p>A single administrator uploads and reviews every question set, keeping the question bank consistent and error-checked.</p>
+        </div>
+        <div class="about-card">
+          <div class="about-card__icon">📊</div>
+          <h3>Analysis, not just a score</h3>
+          <p>See exactly which questions you missed, how your time was spent, and where to focus next.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Why choose -->
+  <section class="section section--tint">
+    <div class="container">
+      <div class="section__head">
+        <h2>Why candidates choose ExamNest</h2>
+        <p>Nothing stands between you and the test — not a signup form, not a paywall.</p>
+      </div>
+      <div class="feature-row">
+        <div class="feature">
+          <div class="feature__icon">⚡</div>
+          <div><h3>Start instantly</h3><p>Pick a test from the list and you're in the exam within one click — no account creation.</p></div>
+        </div>
+        <div class="feature">
+          <div class="feature__icon">🧭</div>
+          <div><h3>Real CBT interface</h3><p>A question palette, mark-for-review, and save &amp; next — the same controls you'll see on exam day.</p></div>
+        </div>
+        <div class="feature">
+          <div class="feature__icon">🔁</div>
+          <div><h3>Retake anytime</h3><p>Your browser remembers your last attempt so you can track improvement over multiple tries.</p></div>
+        </div>
+        <div class="feature">
+          <div class="feature__icon">🔒</div>
+          <div><h3>Private by design</h3><p>Attempt history is stored on your device only — we don't ask who you are.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="section" id="how-it-works">
+    <div class="container">
+      <div class="section__head">
+        <h2>How it works</h2>
+        <p>Four steps between you and your next practice score.</p>
+      </div>
+      <div class="steps">
+        <div class="step"><h3>Choose a test</h3><p>Browse the open tests and pick one that matches what you're preparing for.</p></div>
+        <div class="step"><h3>Start the exam</h3><p>The timer begins the moment you click start — just like the real thing.</p></div>
+        <div class="step"><h3>Answer &amp; navigate</h3><p>Use the palette to jump between questions, mark ones for review, and save as you go.</p></div>
+        <div class="step"><h3>Get your analysis</h3><p>Submit to see your score, accuracy, and a full question-by-question breakdown.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Exam preview -->
+  <section class="section section--tint">
+    <div class="container">
+      <div class="preview-panel">
+        <div class="preview-panel__text">
+          <h2>An interface that matches the real exam</h2>
+          <p>Every control you'd expect on test day, carried over into practice.</p>
+          <div class="preview-check"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg> Countdown timer with auto-submit</div>
+          <div class="preview-check"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg> Colour-coded question palette</div>
+          <div class="preview-check"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg> Mark for review, save &amp; next</div>
+          <div class="preview-check"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg> Auto-save so nothing is lost</div>
+        </div>
+        <div class="palette-demo">
+          <div class="palette-demo__grid">
+            <div class="palette-demo__cell" style="background:#10B981">1</div>
+            <div class="palette-demo__cell" style="background:#10B981">2</div>
+            <div class="palette-demo__cell" style="background:#8b5cf6">3</div>
+            <div class="palette-demo__cell" style="background:#fff;color:#0F172A;border:1px solid #cbd5e1">4</div>
+            <div class="palette-demo__cell" style="background:#64748b">5</div>
+            <div class="palette-demo__cell" style="background:#10B981">6</div>
+            <div class="palette-demo__cell" style="background:#8b5cf6">7</div>
+            <div class="palette-demo__cell" style="background:#64748b">8</div>
+            <div class="palette-demo__cell" style="background:#fff;color:#0F172A;border:1px solid #cbd5e1">9</div>
+            <div class="palette-demo__cell" style="background:#10B981">10</div>
+            <div class="palette-demo__cell" style="background:#64748b">11</div>
+            <div class="palette-demo__cell" style="background:#10B981">12</div>
+          </div>
+          <div class="palette-demo__legend">
+            <span><span class="legend-dot" style="background:#64748b"></span>Not visited</span>
+            <span><span class="legend-dot" style="background:#fff;border:1px solid #94a3b8"></span>Visited</span>
+            <span><span class="legend-dot" style="background:#10B981"></span>Answered</span>
+            <span><span class="legend-dot" style="background:#8b5cf6"></span>Marked for review</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Security -->
+  <section class="section" id="security">
+    <div class="container">
+      <div class="section__head">
+        <h2>Security &amp; privacy</h2>
+        <p>Candidate data stays local; admin access is locked down.</p>
+      </div>
+      <div class="security-grid">
+        <div class="security-card">
+          <div class="security-card__icon">🔐</div>
+          <h3>Protected admin area</h3>
+          <p>Every dashboard page checks your login state before rendering anything.</p>
+        </div>
+        <div class="security-card">
+          <div class="security-card__icon">🚪</div>
+          <h3>Real logout</h3>
+          <p>Signing out destroys the session — back button won't reopen the dashboard.</p>
+        </div>
+        <div class="security-card">
+          <div class="security-card__icon">💾</div>
+          <h3>No file retention</h3>
+          <p>Uploaded question files are parsed and discarded — only structured data is kept.</p>
+        </div>
+        <div class="security-card">
+          <div class="security-card__icon">📍</div>
+          <h3>On-device history</h3>
+          <p>Your attempt history lives in your browser's storage, never on our servers.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section section--tint">
+    <div class="container">
+      <div class="section__head">
+        <h2>Frequently asked questions</h2>
+      </div>
+      <div class="faq">
+        <details class="faq-item">
+          <summary>Do I need to create an account to take a test?</summary>
+          <div class="faq-item__body">No. Every test is open to anyone — just pick one from Get Test and click Start.</div>
+        </details>
+        <details class="faq-item">
+          <summary>Will I lose my progress if I close the tab?</summary>
+          <div class="faq-item__body">Your answers are auto-saved as you go, but a fresh timer starts if you restart a test from scratch.</div>
+        </details>
+        <details class="faq-item">
+          <summary>How is my score calculated?</summary>
+          <div class="faq-item__body">Each test's negative marking rules are applied automatically — correct, wrong, and unattempted answers are shown separately in your results.</div>
+        </details>
+        <details class="faq-item">
+          <summary>Can I retake a test?</summary>
+          <div class="faq-item__body">Yes, anytime. Your browser remembers your last score so you can track improvement across attempts.</div>
+        </details>
+        <details class="faq-item">
+          <summary>Who manages the tests?</summary>
+          <div class="faq-item__body">A single administrator uploads, reviews and publishes every test through a secured dashboard.</div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="section">
+    <div class="container">
+      <div class="cta-panel">
+        <h2>Ready to practice like it's exam day?</h2>
+        <p>Pick a test and start — no forms, no waiting.</p>
+        <div class="button-row" style="justify-content:center;gap:12px;flex-wrap:wrap;display:flex;">
+          <a href="get-test.html" class="btn btn--primary">Browse Available Tests</a>
+          <a href="https://sndp-portfolio.netlify.app/portfolio.html#contact" class="btn btn--ghost" target="_blank" rel="noopener">Contact Us</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer__top">
+      <div>
+        <div class="footer__brand"><span class="brand__mark">EN</span>ExamNest</div>
+        <p style="font-size:0.88rem;max-width:32ch;">Practice like the real exam — free, instant, and account-free for every candidate.</p>
+      </div>
+      <div>
+        <h4>Platform</h4>
+        <ul>
+          <li><a href="get-test.html">Get Test</a></li>
+          <li><a href="index.html#how-it-works">How it works</a></li>
+          <li><a href="index.html#security">Security</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Admin</h4>
+        <ul>
+          <li><a href="login.html">Admin Login</a></li>
+          <li><a href="dashboard.html">Dashboard</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Company</h4>
+        <ul>
+          <li><a href="index.html#about">About</a></li>
+          <li><a href="index.html#faq">FAQ</a></li>
+          <li><a href="https://snd-portfolio.netlify.app/portfolio.html#contact" target="_blank" rel="noopener">Contact Us</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <span>© 2026 ExamNest. All rights reserved.</span>
+      <span>Practice Like the Real Exam.</span>
+    </div>
+  </div>
+</footer>
+
 <script type="module">
-  import { initExam } from "./js/exam.js";
-  initExam();
-  document.addEventListener("contextmenu", (e) => {
-    e.preventDefault();
-});
+  import { initNavbar } from "./js/utils.js";
+  initNavbar(`
+    <a href="get-test.html" class="btn btn--ghost btn--block">Get Test</a>
+    <a href="https://sndp-portfolio.netlify.app/portfolio.html#contact" class="btn btn--ghost btn--block" target="_blank" rel="noopener">Contact Us</a>
+    <a href="login.html" class="btn btn--primary btn--block">Admin Login</a>
+  `);
+//   document.addEventListener("contextmenu", (e) => {
+//     e.preventDefault();
+// });
 
 // F12 aur shortcuts band
 document.addEventListener("keydown", (e) => {

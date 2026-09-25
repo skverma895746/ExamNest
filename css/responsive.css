@@ -181,10 +181,49 @@ img, svg, video, canvas {
 @media (max-width: 480px) {
   .exam-topbar {
     padding: 10px 14px;
+    gap: 8px;
+  }
+  .exam-topbar__title {
+    max-width: 42vw;
+    font-size: 0.88rem;
+  }
+  .exam-topbar__subtitle {
+    font-size: 0.7rem;
   }
   .exam-timer {
-    padding: 7px 13px;
+    padding: 3px 10px 3px 3px;
+    gap: 7px;
+  }
+  .exam-timer__ring {
+    width: 30px;
+    height: 30px;
+  }
+  .exam-timer__ring-icon {
+    width: 24px;
+    height: 24px;
+    font-size: 0.7rem;
+  }
+  .exam-timer__value {
     font-size: 0.85rem;
+  }
+  .exam-timer__label {
+    font-size: 0.56rem;
+  }
+  .header-submit-btn {
+    padding-inline: 10px;
+    font-size: 0.76rem;
+  }
+}
+
+@media (max-width: 360px) {
+  /* Very narrow phones (iPhone SE etc.) — the timer's minutes-remaining
+     label is the first thing that can safely disappear; the ring +
+     digits alone still communicate the time clearly. */
+  .exam-timer__label {
+    display: none;
+  }
+  .exam-topbar__title {
+    max-width: 34vw;
   }
 }
 
@@ -331,6 +370,30 @@ img, svg, video, canvas {
   cursor: pointer;
 }
 
+.instructions-security {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: var(--radius-sm);
+  padding: 16px 18px;
+  margin-bottom: 24px;
+  font-size: 0.85rem;
+  color: #78350f;
+  line-height: 1.6;
+}
+
+.instructions-security strong {
+  color: #78350f;
+}
+
+.instructions-section-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--navy-60);
+  margin: 0 0 12px;
+}
+
 @media (max-width: 480px) {
   .instructions-meta {
     grid-template-columns: repeat(3, 1fr);
@@ -338,6 +401,17 @@ img, svg, video, canvas {
   }
   .instructions-meta div {
     padding: 10px 6px;
+  }
+  .instructions-meta strong {
+    font-size: 1.05rem;
+  }
+  .instructions-meta span {
+    font-size: 0.68rem;
+  }
+  .instructions-ack,
+  .instructions-security {
+    padding: 13px 14px;
+    font-size: 0.84rem;
   }
 }
 
@@ -456,5 +530,84 @@ img, svg, video, canvas {
   .confirm-summary {
     grid-template-columns: repeat(3, 1fr);
     gap: 6px;
+  }
+}
+/* ---------------------------------------------------------------------------
+   13. Exam "Begin" gate + exam loading screen — small-screen tuning
+--------------------------------------------------------------------------- */
+@media (max-width: 480px) {
+  .begin-gate {
+    padding: 16px;
+  }
+  .begin-gate .instructions-card {
+    padding: 26px 20px;
+  }
+  .begin-gate__icon {
+    width: 48px;
+    height: 48px;
+    font-size: 1.2rem;
+    border-radius: 14px;
+  }
+  .begin-gate__list li {
+    font-size: 0.83rem;
+  }
+
+  .exam-loading {
+    padding: 20px;
+  }
+  .exam-loading__text {
+    font-size: 0.94rem;
+  }
+  .exam-loading__subtext {
+    font-size: 0.8rem;
+    max-width: 260px;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   14. Exam question card + options — extra headroom below 375px so long
+       bilingual questions/options never force horizontal scroll and the
+       radio input never gets crushed against wrapped text.
+--------------------------------------------------------------------------- */
+@media (max-width: 480px) {
+  .exam-question-area {
+    padding-inline: 14px;
+  }
+  .exam-question-card {
+    padding: 18px 16px;
+  }
+  .exam-question-card__badge {
+    font-size: 0.66rem;
+    padding: 3px 10px;
+  }
+  .exam-option {
+    padding: 13px 14px;
+    gap: 11px;
+  }
+  .exam-option__text-en {
+    font-size: 0.9rem;
+  }
+  .exam-option__text-hi {
+    font-size: 0.83rem;
+  }
+  .exam-actions .btn,
+  .exam-bottom-nav .btn {
+    min-width: 0;
+    padding-inline: 8px;
+    font-size: 0.74rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .exam-question-card__q,
+  .exam-question-card__q-hindi {
+    font-size: 0.95rem;
+  }
+  .confirm-summary {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .confirm-summary strong {
+    font-size: 1.05rem;
   }
 }

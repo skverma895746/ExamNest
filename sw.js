@@ -1,112 +1,133 @@
-// js/pwa.js
-// Registers the service worker so ExamNest is installable and works
-// offline for previously visited pages/assets. This file only adds
-// PWA capability — it does not change any existing page behavior,
-// and registration failures are silently logged, never surfaced to
-// the user.
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js").catch((err) => {
-      console.warn("Service worker registration failed:", err);
-    });
-  });
-}
+// sw.js
 
-// ---------------- Custom "Install App" button ----------------
-// Modern Chrome no longer shows its own install popup automatically —
-// the site must capture the `beforeinstallprompt` event and offer its
-// own visible trigger. This injects a small floating button (bottom-
-// right) on any page that loads pwa.js, and only shows it once Chrome
-// confirms the site is actually installable.
+const CACHE_NAME = "examnest-v1";
 
-let deferredInstallPrompt = null;
+const APP_FILES = [
+  "./",
+  "./index.html",
+  "./manifest.json",
 
-function createInstallButton() {
-  const btn = document.createElement("button");
-  btn.id = "pwaInstallBtn";
-  btn.type = "button";
-  btn.textContent = "⬇ Install App";
-  btn.style.cssText = `
-    position: fixed;
-    right: 18px;
-    bottom: 18px;
-    z-index: 9999;
-    padding: 12px 20px;
-    background: linear-gradient(135deg, #2563EB, #1D4ED8);
-    color: #fff;
-    border: none;
-    border-radius: 999px;
-    font-family: inherit;
-    font-weight: 600;
-    font-size: 14px;
-    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.35);
-    cursor: pointer;
-    display: none;
-    align-items: center;
-    gap: 8px;
-    transition: transform 200ms ease, box-shadow 200ms ease;
-  `;
-  btn.addEventListener("mouseenter", () => (btn.style.transform = "translateY(-2px)"));
-  btn.addEventListener("mouseleave", () => (btn.style.transform = "translateY(0)"));
+  // CSS
+  "./css/style.css",
+  "./css/responsive.css",
 
-  btn.addEventListener("click", async () => {
-    if (!deferredInstallPrompt) return;
-    btn.disabled = true;
-    deferredInstallPrompt.prompt();
-    const { outcome } = await deferredInstallPrompt.userChoice;
-    console.log("Install prompt outcome:", outcome);
-    deferredInstallPrompt = null;
-    btn.style.display = "none";
-    btn.disabled = false;
-  });
+  // PWA
+  "./js/pwa.js",
 
-  document.body.appendChild(btn);
-  return btn;
-}
+  // Icons
+  "./assets/icons/favicon.svg",
+  "./assets/icons/apple-touch-icon.png"
+];
 
-window.addEventListener("beforeinstallprompt", (event) => {
-  // Prevent the (now largely unused) default mini-infobar and store
-  // the event so our own button can trigger it on demand.
-  event.preventDefault();
-  deferredInstallPrompt = event;
 
-  const show = () => {
-    const btn = document.getElementById("pwaInstallBtn") || createInstallButton();
-    btn.style.display = "flex";
+// --------------------------------------------------
+// INSTALL
+// --------------------------------------------------
 
-    // If the landing page's "Install as an app" card is present, reveal
-    // its inline button too, wired to the same deferred prompt.
-    const cardBtn = document.getElementById("pwaCardInstallBtn");
-    if (cardBtn) {
-      cardBtn.style.display = "inline-flex";
-      cardBtn.addEventListener("click", async () => {
-        if (!deferredInstallPrompt) return;
-        cardBtn.disabled = true;
-        deferredInstallPrompt.prompt();
-        const { outcome } = await deferredInstallPrompt.userChoice;
-        console.log("Install prompt outcome (card):", outcome);
-        deferredInstallPrompt = null;
-        cardBtn.style.display = "none";
-        const floatBtn = document.getElementById("pwaInstallBtn");
-        if (floatBtn) floatBtn.style.display = "none";
-        cardBtn.disabled = false;
-      });
-    }
-  };
+self.addEventListener("install", (event) => {
 
-  if (document.body) {
-    show();
-  } else {
-    document.addEventListener("DOMContentLoaded", show);
-  }
+  console.log("ExamNest SW: Installing...");
+
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => {
+        return cache.addAll(APP_FILES);
+      })
+      .then(() => {
+        console.log("ExamNest SW: Cache completed.");
+        return self.skipWaiting();
+      })
+      .catch((error) => {
+        console.error(
+          "ExamNest SW: Cache failed:",
+          error
+        );
+      })
+  );
+
 });
 
-// Hide both buttons (if visible) once the app has actually been installed.
-window.addEventListener("appinstalled", () => {
-  deferredInstallPrompt = null;
-  const btn = document.getElementById("pwaInstallBtn");
-  if (btn) btn.style.display = "none";
-  const cardBtn = document.getElementById("pwaCardInstallBtn");
-  if (cardBtn) cardBtn.style.display = "none";
-  console.log("ExamNest was installed.");
+
+// --------------------------------------------------
+// ACTIVATE
+// --------------------------------------------------
+
+self.addEventListener("activate", (event) => {
+
+  console.log("ExamNest SW: Activated.");
+
+  event.waitUntil(
+
+    caches.keys()
+      .then((cacheNames) => {
+
+        return Promise.all(
+
+          cacheNames
+            .filter((name) => name !== CACHE_NAME)
+            .map((name) => caches.delete(name))
+
+        );
+
+      })
+      .then(() => self.clients.claim())
+
+  );
+
+});
+
+
+// --------------------------------------------------
+// FETCH
+// --------------------------------------------------
+
+self.addEventListener("fetch", (event) => {
+
+  // Only handle GET requests
+  if (event.request.method !== "GET") {
+    return;
+  }
+
+  event.respondWith(
+
+    caches.match(event.request)
+      .then((cachedResponse) => {
+
+        // If cached → use cache
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+
+        // Otherwise → try network
+        return fetch(event.request)
+          .then((networkResponse) => {
+
+            // Cache successful same-origin responses
+            if (
+              networkResponse &&
+              networkResponse.status === 200 &&
+              networkResponse.type === "basic"
+            ) {
+
+              const responseClone =
+                networkResponse.clone();
+
+              caches.open(CACHE_NAME)
+                .then((cache) => {
+                  cache.put(
+                    event.request,
+                    responseClone
+                  );
+                });
+
+            }
+
+            return networkResponse;
+
+          });
+
+      })
+
+  );
+
 });

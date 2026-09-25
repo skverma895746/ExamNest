@@ -101,14 +101,28 @@ export async function initExam() {
  */
 function renderBeginGate() {
   const root = $("#examRoot");
+  const answeredCount = Object.keys(answers).length;
+
   root.innerHTML = `
-    <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;">
+    <div class="begin-gate">
       <div class="instructions-card" style="max-width:460px;text-align:center;">
-        <h1 style="margin-bottom:10px;">${escapeHtml(test.title)}</h1>
-        <p style="color:var(--navy-60);margin-bottom:24px;">
-          Click below when you're ready to begin. The timer will start immediately.
+        <div class="begin-gate__icon">${isResumedSession ? "↻" : "📝"}</div>
+        <h1 style="margin-bottom:6px;">${escapeHtml(test.title)}</h1>
+        <p style="color:var(--navy-60);margin-bottom:4px;">
+          ${
+            isResumedSession
+              ? `Welcome back — you have an exam in progress with <strong>${answeredCount} of ${questions.length}</strong> questions answered. Your timer continues from where you left off.`
+              : `You're about to begin a timed test. Once you click below, the timer starts immediately and cannot be paused.`
+          }
         </p>
-        <button class="btn btn--primary btn--block" id="beginExamBtn">Begin Exam</button>
+
+        <ul class="begin-gate__list">
+          <li>${questions.length} questions · ${test.duration ?? 0} minutes total</li>
+          <li>Stay on this tab — switching away is tracked and may be flagged</li>
+          <li>Your progress auto-saves, so an accidental refresh won't lose your work</li>
+        </ul>
+
+        <button class="btn btn--primary btn--block" id="beginExamBtn">${isResumedSession ? "Resume Exam" : "Begin Exam"}</button>
       </div>
     </div>`;
 
@@ -122,6 +136,8 @@ function renderBeginGate() {
   });
 }
 
+let isResumedSession = false;
+
 function resumeOrStartSession() {
   const saved = loadExamSession(testId);
   if (saved && saved.questionIds?.length === questions.length) {
@@ -129,6 +145,7 @@ function resumeOrStartSession() {
     statuses = saved.statuses || {};
     secondsRemaining = saved.secondsRemaining ?? test.duration * 60;
     startedAt = saved.startedAt || Date.now();
+    isResumedSession = true;
   } else {
     answers = {};
     statuses = {};
@@ -164,42 +181,56 @@ function renderShell() {
   const root = $("#examRoot");
   root.innerHTML = `
     <div class="exam-topbar">
-      <div class="exam-topbar__title">${escapeHtml(test.title)}<span id="progressLabel"></span></div>
-      <div style="display:flex;align-items:center;gap:10px;">
+      <div class="exam-topbar__brand">
+        <span class="exam-topbar__logo">EN</span>
+        <div class="exam-topbar__titles">
+          <div class="exam-topbar__title">${escapeHtml(test.title)}</div>
+          <div class="exam-topbar__subtitle" id="progressLabel"></div>
+        </div>
+      </div>
+      <div class="exam-topbar__controls">
         <button class="btn btn--ghost btn--sm palette-sheet-toggle" id="openPaletteBtn">Palette</button>
         <button class="btn btn--danger btn--sm header-submit-btn" id="submitBtnHeader">Submit</button>
-        <div class="exam-timer" id="examTimer">⏱ --:--</div>
+        <div class="exam-timer" id="examTimer">
+          <span class="exam-timer__ring" id="examTimerRing"><span class="exam-timer__ring-icon">⏱</span></span>
+          <span class="exam-timer__info">
+            <span class="exam-timer__value" id="examTimerValue">--:--</span>
+            <span class="exam-timer__label">Time Remaining</span>
+          </span>
+        </div>
       </div>
     </div>
+    <div class="exam-header-progress"><div class="exam-header-progress__fill" id="examHeaderProgressFill"></div></div>
+
     <div class="exam-shell">
       <div class="exam-question-area">
         <div class="exam-progress" id="examProgress"></div>
         <div class="exam-question-card" id="questionCard"></div>
         <div class="exam-actions">
           <button class="btn btn--ghost" id="prevBtn">← Previous</button>
+          <button class="btn btn--outline" id="clearAnswerBtn">Clear Answer</button>
           <button class="btn btn--soft" id="markReviewBtn">Mark for Review</button>
           <button class="btn btn--primary" id="saveNextBtn">Save &amp; Next</button>
         </div>
       </div>
       <aside class="exam-palette" id="examPalette">
         <h3>Question Palette</h3>
-        <div class="palette-grid" id="paletteGrid"></div>
         <div class="palette-legend">
-          <span><span class="dot" style="background:#fff;border:1px solid #cbd5e1"></span>Not Visited</span>
-          <span><span class="dot" style="background:#fff;border:2px solid #94a3b8"></span>Visited</span>
           <span><span class="dot" style="background:#10B981"></span>Answered</span>
-          <span><span class="dot" style="background:#8b5cf6"></span>Marked for Review</span>
-          <span><span class="dot" style="background:linear-gradient(135deg,#10B981 50%,#8b5cf6 50%)"></span>Answered &amp; Review</span>
+          <span><span class="dot" style="background:#fff;border:2px solid #94a3b8"></span>Not Answered</span>
+          <span><span class="dot" style="background:#F59E0B"></span>Marked for Review</span>
+          <span><span class="dot" style="background:#fff;border:1px solid #cbd5e1"></span>Not Visited</span>
         </div>
+        <div class="palette-grid" id="paletteGrid"></div>
         <button class="btn btn--primary exam-submit-btn" id="submitBtn">Submit Test</button>
       </aside>
     </div>
 
     <div class="exam-bottom-nav">
       <button class="btn btn--ghost btn--sm" id="prevBtnMobile">Prev</button>
+      <button class="btn btn--outline btn--sm" id="clearAnswerBtnMobile">Clear</button>
       <button class="btn btn--soft btn--sm" id="markReviewBtnMobile">Review</button>
       <button class="btn btn--primary btn--sm" id="saveNextBtnMobile" style="flex:1">Save &amp; Next</button>
-      
     </div>
 
     <div class="palette-sheet-backdrop" id="paletteSheetBackdrop"></div>
@@ -271,6 +302,11 @@ function renderPalette() {
   $("#progressLabel").textContent = `Question ${currentIndex + 1} of ${questions.length}`;
   $("#examProgress").textContent = `Question ${currentIndex + 1} of ${questions.length}`;
 
+  // Purely visual — fills the thin progress bar under the header to
+  // show how far through the test the candidate is.
+  const headerFill = $("#examHeaderProgressFill");
+  if (headerFill) headerFill.style.width = `${((currentIndex + 1) / questions.length) * 100}%`;
+
   $all(".palette-cell").forEach((cell) =>
     cell.addEventListener("click", () => {
       goToQuestion(Number(cell.dataset.index));
@@ -285,6 +321,7 @@ function renderQuestion() {
 
   const card = $("#questionCard");
   card.innerHTML = `
+    <div class="exam-question-card__badge">Multiple Choice Question ${currentIndex + 1}</div>
     <div class="exam-question-card__q">${currentIndex + 1}. ${escapeHtml(q.question)}</div>
     ${q.questionHindi ? `<div class="exam-question-card__q-hindi">${currentIndex + 1}. ${escapeHtml(q.questionHindi)}</div>` : ""}
     ${q._options
@@ -335,6 +372,16 @@ function wireGlobalActions() {
     renderPalette();
     goToQuestion(Math.min(currentIndex + 1, questions.length - 1));
   };
+  // New: clears the answer for the current question without moving
+  // away from it. Purely additive — doesn't touch scoring/submission.
+  const onClearAnswer = () => {
+    const q = questions[currentIndex];
+    delete answers[q.id];
+    const wasReview = [STATUS.REVIEW, STATUS.ANSWERED_REVIEW].includes(statuses[q.id]);
+    statuses[q.id] = wasReview ? STATUS.REVIEW : STATUS.VISITED;
+    persistSession();
+    renderQuestion();
+  };
 
   $("#prevBtn").addEventListener("click", onPrev);
   $("#prevBtnMobile").addEventListener("click", onPrev);
@@ -342,6 +389,8 @@ function wireGlobalActions() {
   $("#saveNextBtnMobile").addEventListener("click", onNext);
   $("#markReviewBtn").addEventListener("click", onMarkReview);
   $("#markReviewBtnMobile").addEventListener("click", onMarkReview);
+  $("#clearAnswerBtn").addEventListener("click", onClearAnswer);
+  $("#clearAnswerBtnMobile").addEventListener("click", onClearAnswer);
 
   $("#submitBtn").addEventListener("click", openSubmitModal);
  
@@ -396,10 +445,18 @@ function startTimer() {
 }
 
 function updateTimerDisplay() {
-  const el = $("#examTimer");
-  if (!el) return;
-  el.textContent = `⏱ ${formatDuration(secondsRemaining)}`;
-  el.classList.toggle("is-low", secondsRemaining <= 60);
+  const valueEl = $("#examTimerValue");
+  const cardEl = $("#examTimer");
+  const ringEl = $("#examTimerRing");
+  if (!valueEl || !cardEl) return;
+  valueEl.textContent = formatDuration(secondsRemaining);
+  cardEl.classList.toggle("is-low", secondsRemaining <= 60);
+  // Purely visual progress ring — does not affect the countdown itself.
+  if (ringEl) {
+    const totalSeconds = (test.duration || 60) * 60;
+    const pct = totalSeconds > 0 ? Math.max(0, Math.min(100, (secondsRemaining / totalSeconds) * 100)) : 0;
+    ringEl.style.setProperty("--ring-pct", `${pct}%`);
+  }
 }
 
 async function finalSubmit(auto = false) {
