@@ -123,13 +123,20 @@
     checkbox.addEventListener("change", () => {
       startBtn.disabled = !checkbox.checked;
     });
-    startBtn.addEventListener("click", () => {
-      // Flags that instructions were accepted for this exact test — exam.html
-      // checks this and refuses to load if someone jumps the flow.
-      if (mode === "retest") clearExamSession(test.id);
-      sessionStorage.setItem("examnest_instructions_ack_" + test.id, "1");
-      window.location.href = `exam.html?testId=${encodeURIComponent(test.id)}`;
-    });
+   startBtn.addEventListener("click", () => {
+  // Always preserve the exact testId received in the URL.
+  if (mode === "retest") {
+    clearExamSession(testId);
+  }
+
+  sessionStorage.setItem(
+    "examnest_instructions_ack_" + testId,
+    "1"
+  );
+
+  window.location.href =
+    `exam.html?testId=${encodeURIComponent(testId)}`;
+});
   }
 </script>
 </body>
