@@ -1,5 +1,5 @@
 // js/auth.js
-// Handles admin login/logout and guards every protected admin page.
+// Handles admin login/logout, 5-hour auto logout, and page protection.
 
 import { auth } from "./firebase.js";
 import {
@@ -8,28 +8,88 @@ import {
   onAuthStateChanged,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-/**
- * Call this at the top of every protected admin page (dashboard, upload,
- * settings, results-admin). It immediately hides the page content and only
- * reveals it once Firebase confirms a logged-in user — this is what stops
- * the browser Back button from ever showing a flash of protected content
- * after logout, since bfcache-restored pages re-run this check on `pageshow`.
- */
+const SESSION_DURATION = 5 * 60 * 60 * 1000; // 5 Hours
+const LOGIN_TIME_KEY = "examnest_login_time";
+
+let logoutTimer = null;
+
+/* ---------- Session Helpers ---------- */
+
+function saveLoginTime() {
+  localStorage.setItem(LOGIN_TIME_KEY, Date.now().toString());
+}
+
+function clearLoginTime() {
+  localStorage.removeItem(LOGIN_TIME_KEY);
+
+  if (logoutTimer) {
+    clearTimeout(logoutTimer);
+    logoutTimer = null;
+  }
+}
+
+function getLoginTime() {
+  const value = localStorage.getItem(LOGIN_TIME_KEY);
+  return value ? Number(value) : null;
+}
+
+function isSessionExpired() {
+  const loginTime = getLoginTime();
+
+  if (!loginTime) return false; // First login → expired mat maan.
+
+  return Date.now() - loginTime >= SESSION_DURATION;
+}
+
+function startAutoLogoutTimer() {
+  if (logoutTimer) clearTimeout(logoutTimer);
+
+  const loginTime = getLoginTime();
+  if (!loginTime) return;
+
+  const remaining = SESSION_DURATION - (Date.now() - loginTime);
+
+  if (remaining <= 0) {
+    logout();
+    return;
+  }
+
+  logoutTimer = setTimeout(() => {
+    logout();
+  }, remaining);
+}
+
+/* ---------- Protected Page Guard ---------- */
+
 export function guardAdminPage() {
   document.documentElement.classList.add("auth-checking");
 
   return new Promise((resolve) => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
-        // No session: bounce to login and stop any further page script.
         window.location.replace("login.html");
         return;
       }
+
+      // Agar login time missing hai (fresh login), save kar do.
+      if (!getLoginTime()) {
+        saveLoginTime();
+      }
+
+      // 5 hours complete ho gaye?
+      if (isSessionExpired()) {
+        clearLoginTime();
+        await signOut(auth).catch(() => {});
+        window.location.replace("login.html");
+        return;
+      }
+
       document.documentElement.classList.remove("auth-checking");
+      startAutoLogoutTimer();
       resolve(user);
     });
 
-    // If the page is restored from the back/forward cache, re-verify.
+    // Back/Forward Cache protection
     window.addEventListener("pageshow", (event) => {
       if (event.persisted) {
         unsubscribe();
@@ -39,20 +99,42 @@ export function guardAdminPage() {
   });
 }
 
+/* ---------- Login ---------- */
+
 export async function login(email, password) {
   const cred = await signInWithEmailAndPassword(auth, email, password);
+
+  saveLoginTime();
+  startAutoLogoutTimer();
+
   return cred.user;
 }
 
+/* ---------- Logout ---------- */
+
 export async function logout() {
-  await signOut(auth);
-  // Replace (not assign) so Back can't return to an admin page from history.
+  clearLoginTime();
+  await signOut(auth).catch(() => {});
   window.location.replace("login.html");
 }
 
-/** For login.html: if already logged in, skip straight to the dashboard. */
+/* ---------- Login Page ---------- */
+
 export function redirectIfAlreadyLoggedIn() {
-  onAuthStateChanged(auth, (user) => {
-    if (user) window.location.replace("dashboard.html");
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) return;
+
+    if (!getLoginTime()) {
+      saveLoginTime();
+    }
+
+    if (isSessionExpired()) {
+      clearLoginTime();
+      await signOut(auth).catch(() => {});
+      return;
+    }
+
+    startAutoLogoutTimer();
+    window.location.replace("dashboard.html");
   });
 }

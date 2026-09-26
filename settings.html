@@ -8,9 +8,9 @@
 <title>Settings — ExamNest Admin</title>
 
 <link rel="icon" href="assets/icons/favicon.svg">
-<link rel="manifest" href="./manifest.json" />
+<link rel="manifest" href="/manifest.json" />
 <meta name="theme-color" content="#2563EB" />
-<link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png" />
+<link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
 <script src="./js/pwa.js" defer></script>
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/dashboard.css">
@@ -50,7 +50,7 @@
 
   <div class="panel">
     <div class="panel__head">
-      <h2>Change Password</h2>
+      <span class="panel__title-group"><span class="panel__icon">🔑</span><h2>Change Password</h2></span>
     </div>
 
     <form id="passwordForm" class="form-grid" style="max-width:420px;">
@@ -81,29 +81,24 @@
 
   <div class="panel">
     <div class="panel__head">
-      <h2>Test Defaults</h2>
+      <span class="panel__title-group"><span class="panel__icon">⚙</span><h2>Test Defaults</h2></span>
     </div>
 
     <form id="defaultsForm" class="form-grid" style="max-width:420px;">
 
-     <div class="form-row">
+      <div class="form-row">
 
-  <div>
-    <label for="defaultTimer">Default Timer (minutes)</label>
-    <input type="number" id="defaultTimer" min="1" value="60">
-  </div>
+        <div>
+          <label for="defaultTimer">Default Timer (minutes)</label>
+          <input type="number" id="defaultTimer" min="1" value="60">
+        </div>
 
-  <div>
-    <label for="defaultMarks">Default Marks Per Question</label>
-    <input type="number" id="defaultMarks" step="any" value="1">
-  </div>
+        <div>
+          <label for="defaultNegative">Default Negative Marking</label>
+          <input type="number" id="defaultNegative" min="0" step="any" value="0">
+        </div>
 
-  <div>
-    <label for="defaultNegative">Default Negative Marking</label>
-    <input type="number" id="defaultNegative" min="0" step="0.25" value="0">
-  </div>
-
-</div>
+      </div>
 
       <button type="submit" class="btn btn--primary" id="defaultsBtn">
         Save Defaults
@@ -116,7 +111,7 @@
 
   <div class="panel">
     <div class="panel__head">
-      <h2>Export Firestore Backup</h2>
+      <span class="panel__title-group"><span class="panel__icon">📦</span><h2>Export Firestore Backup</h2></span>
     </div>
 
     <p style="color:var(--navy-60);font-size:.9rem;margin-bottom:16px;">
@@ -243,19 +238,12 @@ async function saveDefaults(e){
 
   try{
 
-await setDoc(doc(db,"settings","global"),{
+   await setDoc(doc(db,"settings","global"),{
   defaultTimer:Number($("#defaultTimer").value)||60,
-
-  defaultMarksPerQuestion:Number($("#defaultMarks").value)||1,
-
   defaultNegative:Number($("#defaultNegative").value)||0,
-
   defaultDifficulty:"medium",
-
   defaultShuffleQuestions:false,
-
   defaultShuffleOptions:false
-
 },{merge:true});
 
     toast("Defaults saved.","success");
@@ -291,11 +279,9 @@ async function loadDefaults(){
 
       const d=snap.data();
 
-     $("#defaultTimer").value=d.defaultTimer??60;
+      $("#defaultTimer").value=d.defaultTimer??60;
 
-$("#defaultMarks").value=d.defaultMarksPerQuestion??1;
-
-$("#defaultNegative").value=d.defaultNegative??0;
+      $("#defaultNegative").value=d.defaultNegative??0;
 
     }
 

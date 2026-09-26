@@ -157,10 +157,38 @@ html.auth-checking body {
   opacity: 0.8;
 }
 
+.stat-card--green::before {
+  background: linear-gradient(90deg, #16a34a, #4ade80);
+}
+
+.stat-card--amber::before {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
 .stat-card:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow-md);
   border-color: #cbd5e1;
+}
+
+.stat-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--blue-10);
+  font-size: 1.1rem;
+  margin-bottom: 14px;
+}
+
+.stat-card--green .stat-card__icon {
+  background: rgba(22, 163, 74, 0.1);
+}
+
+.stat-card--amber .stat-card__icon {
+  background: rgba(245, 158, 11, 0.12);
 }
 
 .stat-card__label {
@@ -211,6 +239,101 @@ html.auth-checking body {
   font-size: 1.18rem;
   letter-spacing: -0.02em;
   color: var(--navy);
+}
+
+.panel__title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.panel__title-group h2 {
+  margin: 0;
+}
+
+.panel__icon {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: var(--blue-10);
+  color: var(--blue-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+/* Upload page dropzone icon --------------------------------------------- */
+.dropzone__icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  background: var(--blue-10);
+  color: var(--blue-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+/* Quick action cards (dashboard overview) ---------------------------------- */
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.quick-action {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--fast) var(--ease);
+  text-decoration: none;
+  color: inherit;
+}
+
+.quick-action:hover {
+  border-color: var(--blue);
+  background: var(--blue-10);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+}
+
+.quick-action__icon {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: var(--blue-10);
+  color: var(--blue-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.quick-action strong {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--navy);
+  margin-bottom: 2px;
+}
+
+.quick-action small {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--navy-60);
+  font-weight: 400;
+  line-height: 1.35;
 }
 
 /* Tables ------------------------------------------------------------------- */
@@ -265,9 +388,9 @@ table.data-table {
 }
 
 .pill--published {
-  background: rgba(16, 185, 129, 0.12);
-  color: #059669;
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  background: rgba(22, 163, 74, 0.12);
+  color: #16a34a;
+  border: 1px solid rgba(22, 163, 74, 0.28);
 }
 
 .pill--draft {

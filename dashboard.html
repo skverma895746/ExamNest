@@ -10,453 +10,216 @@
 <link rel="stylesheet" href="css/dashboard.css" />
 <link rel="stylesheet" href="css/responsive.css" />
 <link rel="icon" href="assets/icons/favicon.svg" />
-<link rel="manifest" href="./manifest.json" />
+<link rel="manifest" href="/manifest.json" />
 <meta name="theme-color" content="#2563EB" />
-<link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png" />
+<link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
 <script src="./js/pwa.js" defer></script>
 </head>
-
 <body>
 
 <div class="sidebar-scrim" id="sidebarScrim"></div>
-
 <div class="admin-shell">
-
   <aside class="sidebar" id="sidebar">
-
-    <div class="sidebar__brand">
-      <span class="brand__mark">EN</span>ExamNest
-    </div>
-
+    <div class="sidebar__brand"><span class="brand__mark">EN</span>ExamNest</div>
     <nav>
-
-      <a class="sidebar__link" data-key="dashboard" href="dashboard.html">
-        <span class="sidebar__icon">▦</span>Dashboard
-      </a>
-
-      <a class="sidebar__link" data-key="mocktests" href="dashboard.html#mocktests">
-        <span class="sidebar__icon">📄</span>Mock Tests
-      </a>
-
-      <a class="sidebar__link" data-key="upload" href="upload.html">
-        <span class="sidebar__icon">⬆</span>Upload Questions
-      </a>
-
-      <a class="sidebar__link" data-key="questionbank" href="question-bank.html">
-        <span class="sidebar__icon">🗂</span>Question Bank
-      </a>
-
-      <a class="sidebar__link" data-key="settings" href="settings.html">
-        <span class="sidebar__icon">⚙</span>Settings
-      </a>
-
+      <a class="sidebar__link" data-key="dashboard" href="dashboard.html"><span class="sidebar__icon">▦</span>Dashboard</a>
+      <a class="sidebar__link" data-key="mocktests" href="dashboard.html#mocktests"><span class="sidebar__icon">📄</span>Mock Tests</a>
+      <a class="sidebar__link" data-key="upload" href="upload.html"><span class="sidebar__icon">⬆</span>Upload Questions</a>
+      <a class="sidebar__link" data-key="questionbank" href="question-bank.html"><span class="sidebar__icon">🗂</span>Question Bank</a>
+      <a class="sidebar__link" data-key="settings" href="settings.html"><span class="sidebar__icon">⚙</span>Settings</a>
     </nav>
-
-    <button class="sidebar__link sidebar__link--logout" id="logoutBtn">
-      <span class="sidebar__icon">⏻</span>Logout
-    </button>
-
+    <button class="sidebar__link sidebar__link--logout" id="logoutBtn"><span class="sidebar__icon">⏻</span>Logout</button>
   </aside>
-
   <div>
-
     <div class="admin-topbar">
-
-      <button class="hamburger" id="sidebarToggle" aria-label="Open menu">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
-
-      <div class="brand" style="font-size:1rem">
-        <span class="brand__mark">EN</span>ExamNest
-      </div>
-
+      <button class="hamburger" id="sidebarToggle" aria-label="Open menu"><span></span><span></span><span></span></button>
+      <div class="brand" style="font-size:1rem"><span class="brand__mark">EN</span>ExamNest</div>
       <span style="width:38px"></span>
-
     </div>
+<div id="adminMain" class="admin-main">
 
-    <div id="adminMain" class="admin-main">
-
-      <div class="admin-header">
-        <div>
-          <h1 id="pageTitle">Dashboard</h1>
-          <p>An overview of your tests, questions and candidate activity.</p>
-        </div>
-      </div>
-
-      <div class="admin-tabs">
-
-        <button class="admin-tab is-active" data-tab="overview">
-          Overview
-        </button>
-
-        <button class="admin-tab" data-tab="mocktests">
-          Mock Tests
-        </button>
-
-      </div>
-
-      <!-- Overview -->
-
-      <div class="tab-panel is-active" id="panel-overview">
-
-        <div class="stat-grid">
-
-          <div class="stat-card">
-            <div class="stat-card__label">Total Tests</div>
-            <div class="stat-card__value is-loading" id="statTotalTests">—</div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-card__label">Total Questions</div>
-            <div class="stat-card__value is-loading" id="statTotalQuestions">—</div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-card__label">Latest Test</div>
-            <div
-              class="stat-card__value is-loading"
-              style="font-size:1.15rem"
-              id="statLatestTest"
-            >
-              —
-            </div>
-          </div>
-
-        </div>
-
-        <div class="panel">
-
-          <div class="panel__head">
-            <h2>Quick actions</h2>
-          </div>
-
-          <div style="display:flex;gap:12px;flex-wrap:wrap;">
-
-            <button class="btn btn--primary" id="quickCreateTestBtn">
-              + Create Test
-            </button>
-
-            <a href="question-bank.html" class="btn btn--soft">
-              Question Bank
-            </a>
-
-          </div>
-
-        </div>
-
-      </div>
-
-      <!-- Mock Tests -->
-
-      <div class="tab-panel" id="panel-mocktests">
-
-        <div class="panel">
-
-          <div class="panel__head">
-
-            <h2>Mock Tests</h2>
-
-            <button class="btn btn--primary btn--sm" id="createTestBtn">
-              + Create Test
-            </button>
-
-          </div>
-
-          <div class="table-wrap">
-
-            <table class="data-table">
-
-              <thead>
-                <tr>
-                  <th>Title</th>
-                  <th>Duration</th>
-                  <th>Marks / Question</th>
-                  <th>Negative marking</th>
-                  <th>Status</th>
-                  <th>Created</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-
-              <tbody id="mockTestsBody">
-                <tr>
-                  <td colspan="7">Loading tests...</td>
-                </tr>
-              </tbody>
-
-            </table>
-
-          </div>
-
-        </div>
-
-      </div>
-
+  <div class="admin-header">
+    <div>
+      <h1 id="pageTitle">Dashboard</h1>
+      <p>An overview of your tests, questions and candidate activity. <span id="todayDate"></span></p>
     </div>
-
   </div>
 
+  <div class="admin-tabs">
+    <button class="admin-tab is-active" data-tab="overview">Overview</button>
+    <button class="admin-tab" data-tab="mocktests">Mock Tests</button>
+  </div>
+
+  <!-- Overview -->
+  <div class="tab-panel is-active" id="panel-overview">
+    <div class="stat-grid">
+      <div class="stat-card stat-card--blue">
+        <span class="stat-card__icon">📄</span>
+        <div class="stat-card__label">Total Tests</div>
+        <div class="stat-card__value is-loading" id="statTotalTests">—</div>
+      </div>
+      <div class="stat-card stat-card--green">
+        <span class="stat-card__icon">❓</span>
+        <div class="stat-card__label">Total Questions</div>
+        <div class="stat-card__value is-loading" id="statTotalQuestions">—</div>
+      </div>
+      <div class="stat-card stat-card--amber">
+        <span class="stat-card__icon">🕒</span>
+        <div class="stat-card__label">Latest Test</div>
+        <div class="stat-card__value is-loading" style="font-size:1.15rem" id="statLatestTest">—</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel__head">
+        <h2>Quick actions</h2>
+      </div>
+      <div class="quick-actions">
+        <button class="quick-action" id="quickCreateTestBtn">
+          <span class="quick-action__icon">➕</span>
+          <span>
+            <strong>Create Test</strong>
+            <small>Set up a new mock test and start adding questions</small>
+          </span>
+        </button>
+        <a href="upload.html" class="quick-action">
+          <span class="quick-action__icon">⬆</span>
+          <span>
+            <strong>Upload Questions</strong>
+            <small>Bulk import from an Excel/CSV file</small>
+          </span>
+        </a>
+        <a href="question-bank.html" class="quick-action">
+          <span class="quick-action__icon">🗂</span>
+          <span>
+            <strong>Question Bank</strong>
+            <small>Search, edit or manage existing questions</small>
+          </span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mock Tests -->
+  <div class="tab-panel" id="panel-mocktests">
+    <div class="panel">
+      <div class="panel__head">
+        <h2>Mock Tests</h2>
+        <button class="btn btn--primary btn--sm" id="createTestBtn">+ Create Test</button>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Title</th><th>Duration</th><th>Negative marking</th><th>Status</th><th>Created</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="mockTestsBody">
+            <tr><td colspan="6">Loading tests...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+  </div>
 </div>
 
 
 <!-- Create / Edit Test Modal -->
-
 <div class="modal-backdrop" id="testModalBackdrop">
-
   <div class="modal">
-
     <h2 id="testModalTitle">Create Test</h2>
-
-    <p
-      id="testModalHint"
-      style="font-size:0.82rem;color:var(--navy-60);margin-bottom:16px;display:none;"
-    >
+    <p id="testModalHint" style="font-size:0.82rem;color:var(--navy-60);margin-bottom:16px;display:none;">
       Saving publishes this test immediately and takes you straight to Upload Questions.
     </p>
-
     <form id="testModalForm" class="form-grid">
-
       <div>
-
         <label for="ttTitle">Title</label>
-
-        <input
-          type="text"
-          name="title"
-          id="ttTitle"
-          required
-        />
-
+        <input type="text" name="title" id="ttTitle" required/>
       </div>
-
       <div>
-
         <label for="ttDesc">Description</label>
-
-        <textarea
-          name="description"
-          id="ttDesc"
-          rows="3"
-        ></textarea>
-
+        <textarea name="description" id="ttDesc" rows="3"></textarea>
       </div>
-
       <div class="form-row">
-
         <div>
-
-          <label for="ttDuration">
-            Duration (minutes)
-          </label>
-
-          <input
-            type="number"
-            name="duration"
-            id="ttDuration"
-            min="1"
-            value="60"
-          />
-
+          <label for="ttDuration">Duration (minutes)</label>
+          <input type="number" name="duration" id="ttDuration" min="1" value="60" />
         </div>
-
         <div>
-
-          <label for="ttMarks">
-            Marks per question
-          </label>
-
-          <input
-            type="number"
-            name="marksPerQuestion"
-            id="ttMarks"
-            
-            step="any"
-            value="1"
-            required
-          />
-
+          <label for="ttNeg">Negative marking (per wrong answer)</label>
+          <input type="number" name="negativeMarking" id="ttNeg" min="0" step="any" value="0"/>
         </div>
-
       </div>
-
       <div>
-
-        <label for="ttNeg">
-          Negative marking (per wrong answer)
-        </label>
-
-        <input
-          type="number"
-          name="negativeMarking"
-          id="ttNeg"
-          
-          step="any"
-          value="0"
-        />
-
-      </div>
-
-      <div>
-
-        <label for="ttDifficulty">
-          Difficulty
-        </label>
-
-        <select
-          name="difficulty"
-          id="ttDifficulty"
-        >
+        <label for="ttDifficulty">Difficulty</label>
+        <select name="difficulty" id="ttDifficulty">
           <option value="easy">Easy</option>
           <option value="medium" selected>Medium</option>
           <option value="hard">Hard</option>
         </select>
-
       </div>
-
-      <div class="checkbox-row">
-
-        <input
-          type="checkbox"
-          name="shuffleQuestions"
-          id="ttShuffleQ"
-        />
-
-        <label for="ttShuffleQ" style="margin:0">
-          Shuffle questions
-        </label>
-
-      </div>
-
-      <div class="checkbox-row">
-
-        <input
-          type="checkbox"
-          name="shuffleOptions"
-          id="ttShuffleO"
-        />
-
-        <label for="ttShuffleO" style="margin:0">
-          Shuffle options
-        </label>
-
-      </div>
-
+      <div class="checkbox-row"><input type="checkbox" name="shuffleQuestions" id="ttShuffleQ" /><label for="ttShuffleQ" style="margin:0">Shuffle questions</label></div>
+      <div class="checkbox-row"><input type="checkbox" name="shuffleOptions" id="ttShuffleO" /><label for="ttShuffleO" style="margin:0">Shuffle options</label></div>
       <div class="modal-actions">
-
-        <button
-          type="button"
-          class="btn btn--ghost"
-          id="testModalCancel"
-        >
-          Cancel
-        </button>
-
-        <button
-          type="submit"
-          class="btn btn--primary"
-        >
-          Save Test
-        </button>
-
+        <button type="button" class="btn btn--ghost" id="testModalCancel">Cancel</button>
+        <button type="submit" class="btn btn--primary">Save Test</button>
       </div>
-
     </form>
-
   </div>
-
 </div>
 
-
 <script type="module">
-
   import { guardAdminPage } from "./js/auth.js";
-
   import {
     renderShell,
     loadOverviewStats,
     loadMockTestsTable,
     wireMockTestActions,
   } from "./js/dashboard.js";
-
   import { $, $all } from "./js/utils.js";
 
   guardAdminPage().then(() => {
-
     renderShell("dashboard");
-
     loadOverviewStats();
-
     wireMockTestActions();
-
     wireTabs();
 
+    // Purely cosmetic — today's date next to the header subtitle.
+    const dateEl = $("#todayDate");
+    if (dateEl) {
+      dateEl.textContent = "· " + new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" });
+    }
+
     $("#quickCreateTestBtn")?.addEventListener("click", () => {
-
-      document
-        .querySelector('[data-tab="mocktests"]')
-        .click();
-
+      document.querySelector('[data-tab="mocktests"]').click();
       $("#createTestBtn")?.click();
-
     });
-
   });
 
   function wireTabs() {
-
     const tabs = $all(".admin-tab");
     const panels = $all(".tab-panel");
 
     function activate(key) {
-
-      tabs.forEach((t) =>
-        t.classList.toggle(
-          "is-active",
-          t.dataset.tab === key
-        )
-      );
-
-      panels.forEach((p) =>
-        p.classList.toggle(
-          "is-active",
-          p.id === `panel-${key}`
-        )
-      );
-
+      tabs.forEach((t) => t.classList.toggle("is-active", t.dataset.tab === key));
+      panels.forEach((p) => p.classList.toggle("is-active", p.id === `panel-${key}`));
     }
 
     tabs.forEach((tab) =>
-
       tab.addEventListener("click", () => {
-
-        window.location.hash =
-          tab.dataset.tab;
-
+        window.location.hash = tab.dataset.tab;
         activate(tab.dataset.tab);
-
-        if (tab.dataset.tab === "mocktests") {
-          loadMockTestsTable();
-        }
-
+        if (tab.dataset.tab === "mocktests") loadMockTestsTable();
       })
-
     );
 
-    const initial =
-      window.location.hash.replace("#", "") ||
-      "overview";
-
+    const initial = window.location.hash.replace("#", "") || "overview";
     activate(initial);
-
-    if (initial === "mocktests") {
-      loadMockTestsTable();
-    }
-
+    if (initial === "mocktests") loadMockTestsTable();
   }
-
 </script>
-
 </body>
 </html>
