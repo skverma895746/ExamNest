@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow" />
 <meta http-equiv="Cache-Control" content="no-store">
+
 <title>Settings — ExamNest Admin</title>
 
 <link rel="icon" href="assets/icons/favicon.svg">
@@ -12,128 +13,399 @@
 <meta name="theme-color" content="#2563EB" />
 <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
 <script src="./js/pwa.js" defer></script>
+
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/dashboard.css">
 <link rel="stylesheet" href="css/responsive.css">
 </head>
+
 <body>
 
 <div class="sidebar-scrim" id="sidebarScrim"></div>
+
 <div class="admin-shell">
+
+  <!-- ================= SIDEBAR ================= -->
+
   <aside class="sidebar" id="sidebar">
-    <div class="sidebar__brand"><span class="brand__mark">EN</span>ExamNest</div>
+
+    <div class="sidebar__brand">
+      <span class="brand__mark">EN</span>
+      ExamNest
+    </div>
+
     <nav>
-      <a class="sidebar__link" data-key="dashboard" href="dashboard.html"><span class="sidebar__icon">▦</span>Dashboard</a>
-      <a class="sidebar__link" data-key="mocktests" href="dashboard.html#mocktests"><span class="sidebar__icon">📄</span>Mock Tests</a>
-      <a class="sidebar__link" data-key="upload" href="upload.html"><span class="sidebar__icon">⬆</span>Upload Questions</a>
-      <a class="sidebar__link" data-key="questionbank" href="question-bank.html"><span class="sidebar__icon">🗂</span>Question Bank</a>
-      <a class="sidebar__link" data-key="settings" href="settings.html"><span class="sidebar__icon">⚙</span>Settings</a>
+
+      <a
+        class="sidebar__link"
+        data-key="dashboard"
+        href="dashboard.html"
+      >
+        <span class="sidebar__icon">▦</span>
+        Dashboard
+      </a>
+
+      <a
+        class="sidebar__link"
+        data-key="mocktests"
+        href="dashboard.html#mocktests"
+      >
+        <span class="sidebar__icon">📄</span>
+        Mock Tests
+      </a>
+
+      <a
+        class="sidebar__link"
+        data-key="upload"
+        href="upload.html"
+      >
+        <span class="sidebar__icon">⬆</span>
+        Upload Questions
+      </a>
+
+      <a
+        class="sidebar__link"
+        data-key="questionbank"
+        href="question-bank.html"
+      >
+        <span class="sidebar__icon">🗂</span>
+        Question Bank
+      </a>
+
+      <a
+        class="sidebar__link"
+        data-key="settings"
+        href="settings.html"
+      >
+        <span class="sidebar__icon">⚙</span>
+        Settings
+      </a>
+
     </nav>
-    <button class="sidebar__link sidebar__link--logout" id="logoutBtn"><span class="sidebar__icon">⏻</span>Logout</button>
-  </aside>
-  <div>
-    <div class="admin-topbar">
-      <button class="hamburger" id="sidebarToggle" aria-label="Open menu"><span></span><span></span><span></span></button>
-      <div class="brand" style="font-size:1rem"><span class="brand__mark">EN</span>ExamNest</div>
-      <span style="width:38px"></span>
-    </div>
-<div id="adminMain" class="admin-main">
 
-  <div class="admin-header">
-    <div>
-      <h1>Settings</h1>
-      <p>Manage your admin credentials and platform-wide defaults.</p>
-    </div>
-  </div>
-
-  <!-- Change Password -->
-
-  <div class="panel">
-    <div class="panel__head">
-      <span class="panel__title-group"><span class="panel__icon">🔑</span><h2>Change Password</h2></span>
-    </div>
-
-    <form id="passwordForm" class="form-grid" style="max-width:420px;">
-
-      <div>
-        <label for="currentPassword">Current Password</label>
-        <input type="password" id="currentPassword" required autocomplete="current-password">
-      </div>
-
-      <div>
-        <label for="newPassword">New Password</label>
-        <input type="password" id="newPassword" required minlength="6" autocomplete="new-password">
-      </div>
-
-      <div>
-        <label for="confirmPassword">Confirm New Password</label>
-        <input type="password" id="confirmPassword" required minlength="6">
-      </div>
-
-      <button type="submit" class="btn btn--primary" id="passwordBtn">
-        Update Password
-      </button>
-
-    </form>
-  </div>
-
-  <!-- Test Defaults -->
-
-  <div class="panel">
-    <div class="panel__head">
-      <span class="panel__title-group"><span class="panel__icon">⚙</span><h2>Test Defaults</h2></span>
-    </div>
-
-    <form id="defaultsForm" class="form-grid" style="max-width:420px;">
-
-      <div class="form-row">
-
-        <div>
-          <label for="defaultTimer">Default Timer (minutes)</label>
-          <input type="number" id="defaultTimer" min="1" value="60">
-        </div>
-
-        <div>
-          <label for="defaultNegative">Default Negative Marking</label>
-          <input type="number" id="defaultNegative" min="0" step="any" value="0">
-        </div>
-
-      </div>
-
-      <button type="submit" class="btn btn--primary" id="defaultsBtn">
-        Save Defaults
-      </button>
-
-    </form>
-  </div>
-
-  <!-- Export Backup -->
-
-  <div class="panel">
-    <div class="panel__head">
-      <span class="panel__title-group"><span class="panel__icon">📦</span><h2>Export Firestore Backup</h2></span>
-    </div>
-
-    <p style="color:var(--navy-60);font-size:.9rem;margin-bottom:16px;">
-      Download a JSON backup of every test, question and attempt stored in Firestore.
-    </p>
-
-    <button class="btn btn--soft" id="exportBtn">
-      Export Backup (.json)
+    <button
+      class="sidebar__link sidebar__link--logout"
+      id="logoutBtn"
+    >
+      <span class="sidebar__icon">⏻</span>
+      Logout
     </button>
+
+  </aside>
+
+
+  <!-- ================= MAIN ================= -->
+
+  <div>
+
+    <div class="admin-topbar">
+
+      <button
+        class="hamburger"
+        id="sidebarToggle"
+        aria-label="Open menu"
+      >
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <div
+        class="brand"
+        style="font-size:1rem"
+      >
+        <span class="brand__mark">EN</span>
+        ExamNest
+      </div>
+
+      <span style="width:38px"></span>
+
+    </div>
+
+
+    <div
+      id="adminMain"
+      class="admin-main"
+    >
+
+      <div class="admin-header">
+
+        <div>
+
+          <h1>
+            Settings
+          </h1>
+
+          <p>
+            Manage your admin credentials and platform-wide defaults.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <!-- =====================================================
+           CHANGE PASSWORD
+      ====================================================== -->
+
+      <div class="panel">
+
+        <div class="panel__head">
+
+          <span class="panel__title-group">
+
+            <span class="panel__icon">
+              🔑
+            </span>
+
+            <h2>
+              Change Password
+            </h2>
+
+          </span>
+
+        </div>
+
+
+        <form
+          id="passwordForm"
+          class="form-grid"
+          style="max-width:420px;"
+        >
+
+          <div>
+
+            <label for="currentPassword">
+              Current Password
+            </label>
+
+            <input
+              type="password"
+              id="currentPassword"
+              required
+              autocomplete="current-password"
+            >
+
+          </div>
+
+
+          <div>
+
+            <label for="newPassword">
+              New Password
+            </label>
+
+            <input
+              type="password"
+              id="newPassword"
+              required
+              minlength="6"
+              autocomplete="new-password"
+            >
+
+          </div>
+
+
+          <div>
+
+            <label for="confirmPassword">
+              Confirm New Password
+            </label>
+
+            <input
+              type="password"
+              id="confirmPassword"
+              required
+              minlength="6"
+            >
+
+          </div>
+
+
+          <button
+            type="submit"
+            class="btn btn--primary"
+            id="passwordBtn"
+          >
+            Update Password
+          </button>
+
+        </form>
+
+      </div>
+
+
+      <!-- =====================================================
+           TEST DEFAULTS
+      ====================================================== -->
+
+      <div class="panel">
+
+        <div class="panel__head">
+
+          <span class="panel__title-group">
+
+            <span class="panel__icon">
+              ⚙
+            </span>
+
+            <h2>
+              Test Defaults
+            </h2>
+
+          </span>
+
+        </div>
+
+
+        <form
+          id="defaultsForm"
+          class="form-grid"
+          style="max-width:420px;"
+        >
+
+          <div class="form-row">
+
+            <!-- DEFAULT TIMER -->
+
+            <div>
+
+              <label for="defaultTimer">
+                Default Timer (minutes)
+              </label>
+
+              <input
+                type="number"
+                id="defaultTimer"
+                min="1"
+                value="60"
+              >
+
+            </div>
+
+
+            <!-- DEFAULT MARKS -->
+
+            <div>
+
+              <label for="defaultMarks">
+                Default Marks per Question
+              </label>
+
+              <input
+                type="number"
+                id="defaultMarks"
+                
+                step="any"
+                value="1"
+              >
+
+            </div>
+
+          </div>
+
+
+          <!-- DEFAULT NEGATIVE MARKING -->
+
+          <div>
+
+            <label for="defaultNegative">
+              Default Negative Marking
+            </label>
+
+            <input
+              type="number"
+              id="defaultNegative"
+            
+              step="any"
+              value="0"
+            >
+
+          </div>
+
+
+          <button
+            type="submit"
+            class="btn btn--primary"
+            id="defaultsBtn"
+          >
+            Save Defaults
+          </button>
+
+        </form>
+
+      </div>
+
+
+      <!-- =====================================================
+           EXPORT BACKUP
+      ====================================================== -->
+
+      <div class="panel">
+
+        <div class="panel__head">
+
+          <span class="panel__title-group">
+
+            <span class="panel__icon">
+              📦
+            </span>
+
+            <h2>
+              Export Firestore Backup
+            </h2>
+
+          </span>
+
+        </div>
+
+
+        <p
+          style="
+            color:var(--navy-60);
+            font-size:.9rem;
+            margin-bottom:16px;
+          "
+        >
+          Download a JSON backup of every test,
+          question and attempt stored in Firestore.
+        </p>
+
+
+        <button
+          class="btn btn--soft"
+          id="exportBtn"
+        >
+          Export Backup (.json)
+        </button>
+
+      </div>
+
+    </div>
+
   </div>
 
 </div>
-  </div>
-</div>
+
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
 <script type="module">
 
 import { guardAdminPage } from "./js/auth.js";
-import { renderShell } from "./js/dashboard.js";
+
+import {
+  renderShell
+} from "./js/dashboard.js";
+
 import { db } from "./js/firebase.js";
-import { $, toast } from "./js/utils.js";
+
+import {
+  $,
+  toast
+} from "./js/utils.js";
+
 
 import {
   doc,
@@ -143,236 +415,525 @@ import {
   getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+
 import {
   EmailAuthProvider,
   reauthenticateWithCredential,
   updatePassword
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-guardAdminPage().then(async(user)=>{
+
+/* =========================================================
+   INITIALIZATION
+========================================================= */
+
+guardAdminPage().then(async (user) => {
 
   renderShell("settings");
 
   await loadDefaults();
 
-  $("#passwordForm").addEventListener("submit",e=>changePassword(e,user));
+  $("#passwordForm")
+    .addEventListener(
+      "submit",
+      (e) => changePassword(e, user)
+    );
 
-  $("#defaultsForm").addEventListener("submit",saveDefaults);
+  $("#defaultsForm")
+    .addEventListener(
+      "submit",
+      saveDefaults
+    );
 
-  $("#exportBtn").addEventListener("click",exportBackup);
+  $("#exportBtn")
+    .addEventListener(
+      "click",
+      exportBackup
+    );
 
 });
 
-// ---------------- Password ----------------
 
-async function changePassword(e,user){
+/* =========================================================
+   PASSWORD
+========================================================= */
+
+async function changePassword(e, user) {
 
   e.preventDefault();
 
-  const btn=$("#passwordBtn");
+  const btn =
+    $("#passwordBtn");
 
-  btn.disabled=true;
-  btn.textContent="Updating...";
+  btn.disabled = true;
+  btn.textContent = "Updating...";
 
-  const current=$("#currentPassword").value;
-  const next=$("#newPassword").value;
-  const confirm=$("#confirmPassword").value;
 
-  if(next!==confirm){
+  const current =
+    $("#currentPassword").value;
 
-    toast("Passwords do not match.","warning");
+  const next =
+    $("#newPassword").value;
 
-    btn.disabled=false;
-    btn.textContent="Update Password";
+  const confirm =
+    $("#confirmPassword").value;
+
+
+  if (next !== confirm) {
+
+    toast(
+      "Passwords do not match.",
+      "warning"
+    );
+
+    btn.disabled = false;
+    btn.textContent = "Update Password";
 
     return;
   }
 
-  try{
 
-    const cred=EmailAuthProvider.credential(user.email,current);
+  try {
 
-    await reauthenticateWithCredential(user,cred);
+    const cred =
+      EmailAuthProvider.credential(
+        user.email,
+        current
+      );
 
-    await updatePassword(user,next);
 
-    toast("Password updated.","success");
+    await reauthenticateWithCredential(
+      user,
+      cred
+    );
+
+
+    await updatePassword(
+      user,
+      next
+    );
+
+
+    toast(
+      "Password updated.",
+      "success"
+    );
+
 
     e.target.reset();
 
-  }catch(err){
+
+  } catch (err) {
 
     console.error(err);
 
-    if(err.code==="auth/wrong-password"){
 
-      toast("Current password is incorrect.","error");
+    if (
+      err.code ===
+      "auth/wrong-password"
+    ) {
 
-    }else if(err.code==="auth/too-many-requests"){
+      toast(
+        "Current password is incorrect.",
+        "error"
+      );
 
-      toast("Too many attempts. Try later.","error");
+    } else if (
+      err.code ===
+      "auth/too-many-requests"
+    ) {
 
-    }else{
+      toast(
+        "Too many attempts. Try later.",
+        "error"
+      );
 
-      toast("Couldn't update password.","error");
+    } else {
+
+      toast(
+        "Couldn't update password.",
+        "error"
+      );
 
     }
 
   }
 
-  btn.disabled=false;
-  btn.textContent="Update Password";
 
+  btn.disabled = false;
+  btn.textContent = "Update Password";
 }
 
-// ---------------- Defaults ----------------
 
-async function saveDefaults(e){
+/* =========================================================
+   SAVE TEST DEFAULTS
+========================================================= */
+
+async function saveDefaults(e) {
 
   e.preventDefault();
 
-  const btn=$("#defaultsBtn");
 
-  btn.disabled=true;
-  btn.textContent="Saving...";
+  const btn =
+    $("#defaultsBtn");
 
-  try{
 
-   await setDoc(doc(db,"settings","global"),{
-  defaultTimer:Number($("#defaultTimer").value)||60,
-  defaultNegative:Number($("#defaultNegative").value)||0,
-  defaultDifficulty:"medium",
-  defaultShuffleQuestions:false,
-  defaultShuffleOptions:false
-},{merge:true});
+  btn.disabled = true;
+  btn.textContent = "Saving...";
 
-    toast("Defaults saved.","success");
 
-  }catch(err){
+  const timer =
+    Number($("#defaultTimer").value);
+
+
+  const marks =
+    Number($("#defaultMarks").value);
+
+
+  const negative =
+    Number($("#defaultNegative").value);
+
+
+  /* -------------------------------------------------------
+     VALIDATION
+  ------------------------------------------------------- */
+
+  if (
+    !Number.isFinite(timer) ||
+    timer < 1
+  ) {
+
+    toast(
+      "Default timer must be at least 1 minute.",
+      "warning"
+    );
+
+    btn.disabled = false;
+    btn.textContent = "Save Defaults";
+
+    return;
+  }
+
+
+  if (
+    !Number.isFinite(marks) ||
+    marks < 0
+  ) {
+
+    toast(
+      "Default marks per question must be 0 or greater.",
+      "warning"
+    );
+
+    btn.disabled = false;
+    btn.textContent = "Save Defaults";
+
+    return;
+  }
+
+
+  if (
+    !Number.isFinite(negative) ||
+    negative < 0
+  ) {
+
+    toast(
+      "Default negative marking must be 0 or greater.",
+      "warning"
+    );
+
+    btn.disabled = false;
+    btn.textContent = "Save Defaults";
+
+    return;
+  }
+
+
+  try {
+
+    await setDoc(
+      doc(
+        db,
+        "settings",
+        "global"
+      ),
+      {
+
+        defaultTimer:
+          timer,
+
+        /*
+         * NEW
+         */
+        defaultMarksPerQuestion:
+          marks,
+
+        defaultNegative:
+          negative,
+
+        defaultDifficulty:
+          "medium",
+
+        defaultShuffleQuestions:
+          false,
+
+        defaultShuffleOptions:
+          false
+
+      },
+      {
+        merge: true
+      }
+    );
+
+
+    toast(
+      "Defaults saved.",
+      "success"
+    );
+
+
+  } catch (err) {
 
     console.error(err);
 
-    if(err.code==="permission-denied"){
 
-      toast("Firestore permission denied.","error");
+    if (
+      err.code ===
+      "permission-denied"
+    ) {
 
-    }else{
+      toast(
+        "Firestore permission denied.",
+        "error"
+      );
 
-      toast("Couldn't save defaults.","error");
+    } else {
+
+      toast(
+        "Couldn't save defaults.",
+        "error"
+      );
 
     }
 
   }
 
-  btn.disabled=false;
-  btn.textContent="Save Defaults";
 
+  btn.disabled = false;
+  btn.textContent = "Save Defaults";
 }
 
-async function loadDefaults(){
 
-  try{
+/* =========================================================
+   LOAD TEST DEFAULTS
+========================================================= */
 
-    const snap=await getDoc(doc(db,"settings","global"));
+async function loadDefaults() {
 
-    if(snap.exists()){
+  try {
 
-      const d=snap.data();
+    const snap =
+      await getDoc(
+        doc(
+          db,
+          "settings",
+          "global"
+        )
+      );
 
-      $("#defaultTimer").value=d.defaultTimer??60;
 
-      $("#defaultNegative").value=d.defaultNegative??0;
+    if (
+      snap.exists()
+    ) {
+
+      const d =
+        snap.data();
+
+
+      $("#defaultTimer").value =
+        d.defaultTimer ?? 60;
+
+
+      /*
+       * NEW
+       *
+       * Old settings documents
+       * automatically use 1.
+       */
+      $("#defaultMarks").value =
+        d.defaultMarksPerQuestion ?? 1;
+
+
+      $("#defaultNegative").value =
+        d.defaultNegative ?? 0;
 
     }
 
-  }catch(err){
+  } catch (err) {
 
     console.error(err);
 
   }
-
 }
 
-// ---------------- Export Backup ----------------
 
-async function exportBackup(){
+/* =========================================================
+   EXPORT BACKUP
+========================================================= */
 
-  const btn=$("#exportBtn");
+async function exportBackup() {
 
-  btn.disabled=true;
-  btn.textContent="Preparing...";
+  const btn =
+    $("#exportBtn");
 
-  try{
 
-    const backup={tests:[],attempts:[]};
+  btn.disabled = true;
+  btn.textContent = "Preparing...";
 
-    const testsSnap=await getDocs(collection(db,"tests"));
 
-    for(const t of testsSnap.docs){
+  try {
 
-      const qSnap=await getDocs(collection(db,"tests",t.id,"questions"));
+    const backup = {
+      tests: [],
+      attempts: []
+    };
+
+
+    const testsSnap =
+      await getDocs(
+        collection(
+          db,
+          "tests"
+        )
+      );
+
+
+    for (
+      const t of testsSnap.docs
+    ) {
+
+      const qSnap =
+        await getDocs(
+          collection(
+            db,
+            "tests",
+            t.id,
+            "questions"
+          )
+        );
+
 
       backup.tests.push({
 
-        id:t.id,
+        id:
+          t.id,
 
         ...t.data(),
 
-        questions:qSnap.docs.map(q=>({
+        questions:
+          qSnap.docs.map(
+            (q) => ({
 
-          id:q.id,
+              id:
+                q.id,
 
-          ...q.data()
+              ...q.data()
 
-        }))
+            })
+          )
 
       });
 
     }
 
-    const attemptsSnap=await getDocs(collection(db,"attempts"));
 
-    backup.attempts=attemptsSnap.docs.map(a=>({
+    const attemptsSnap =
+      await getDocs(
+        collection(
+          db,
+          "attempts"
+        )
+      );
 
-      id:a.id,
 
-      ...a.data()
+    backup.attempts =
+      attemptsSnap.docs.map(
+        (a) => ({
 
-    }));
+          id:
+            a.id,
 
-    const blob=new Blob(
+          ...a.data()
 
-      [JSON.stringify(backup,null,2)],
+        })
+      );
 
-      {type:"application/json"}
 
-    );
+    const blob =
+      new Blob(
+        [
+          JSON.stringify(
+            backup,
+            null,
+            2
+          )
+        ],
+        {
+          type:
+            "application/json"
+        }
+      );
 
-    const url=URL.createObjectURL(blob);
 
-    const a=document.createElement("a");
+    const url =
+      URL.createObjectURL(
+        blob
+      );
 
-    a.href=url;
 
-    a.download=`examnest-backup-${Date.now()}.json`;
+    const a =
+      document.createElement(
+        "a"
+      );
+
+
+    a.href = url;
+
+
+    a.download =
+      `examnest-backup-${Date.now()}.json`;
+
 
     a.click();
 
-    URL.revokeObjectURL(url);
 
-    toast("Backup downloaded.","success");
+    URL.revokeObjectURL(
+      url
+    );
 
-  }catch(err){
+
+    toast(
+      "Backup downloaded.",
+      "success"
+    );
+
+
+  } catch (err) {
 
     console.error(err);
 
-    toast("Export failed.","error");
+    toast(
+      "Export failed.",
+      "error"
+    );
 
   }
 
-  btn.disabled=false;
-  btn.textContent="Export Backup (.json)";
 
+  btn.disabled = false;
+  btn.textContent =
+    "Export Backup (.json)";
 }
 
 </script>
